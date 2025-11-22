@@ -1,11 +1,10 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 /**
- * Hardhat Ignition module for deploying AppStore contracts
+ * Hardhat Ignition module for deploying AppStore contract
  * 
  * This module deploys:
- * 1. AppStore - Main contract for app registry and purchases
- * 2. AppStoreERC20 - Contract for ERC20 token payments
+ * 1. AppStore - Main contract for app registry and downloads
  */
 const AppStoreModule = buildModule("AppStoreModule", (m) => {
   // Deploy AppStore contract
@@ -13,13 +12,8 @@ const AppStoreModule = buildModule("AppStoreModule", (m) => {
     id: "AppStore",
   });
 
-  // Deploy AppStoreERC20 contract
-  const appStoreERC20 = m.contract("AppStoreERC20", [], {
-    id: "AppStoreERC20",
-  });
-
-  // Return both contracts for access in scripts
-  return { appStore, appStoreERC20 };
+  // Return contract for access in scripts
+  return { appStore };
 });
 
 export default AppStoreModule;

@@ -14,11 +14,19 @@
     "deploy:local": "hardhat ignition deploy ignition/modules/AppStore.ts --network localhost",
     "deploy:sepolia": "hardhat ignition deploy ignition/modules/AppStore.ts --network sepolia",
     "verify:sepolia": "hardhat ignition verify AppStoreModule --network sepolia",
-    "node": "hardhat node"
+    "node": "hardhat node --hostname 0.0.0.0",
+    "update-subgraph": "node scripts/update-subgraph-address.js",
+    "copy-deployments": "node scripts/copy-deployments.js",
+    "deploy:full": "npm run deploy:local && npm run update-subgraph && npm run copy-deployments"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.5",
+    "@nomicfoundation/hardhat-ignition-viem": "^3.0.5",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@nomicfoundation/hardhat-node-test-runner": "^3.0.7",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
+    "@nomicfoundation/hardhat-viem": "^3.0.1",
+    "@nomicfoundation/hardhat-viem-assertions": "^3.0.4",
     "@types/node": "^22.19.1",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^3.0.15",
