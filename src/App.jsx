@@ -1,11 +1,25 @@
 import React, { useState } from 'react'
 import Home from './pages/Home'
 import Publish from './pages/Publish'
+import AppDetail from './pages/AppDetail'
+import MyApps from './pages/MyApps'
+import PublisherDashboard from './pages/PublisherDashboard'
 import { useWallet } from './hooks/useWallet'
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home') // 'home' | 'publish'
+  const [currentPage, setCurrentPage] = useState('home') // 'home' | 'publish' | 'detail' | 'myapps' | 'dashboard'
+  const [selectedApp, setSelectedApp] = useState(null)
   const wallet = useWallet()
+
+  const navigateToDetail = (slug) => {
+    setSelectedApp(slug)
+    setCurrentPage('detail')
+  }
+
+  const navigateToHome = () => {
+    setSelectedApp(null)
+    setCurrentPage('home')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,6 +54,28 @@ export default function App() {
                 }`}
               >
                 📤 Publicar
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage('myapps')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  currentPage === 'myapps' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                📱 Mis Apps
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage('dashboard')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  currentPage === 'dashboard' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                📊 Dashboard
               </button>
               
               {/* Wallet Connection */}
@@ -96,8 +132,13 @@ export default function App() {
       </header>
 
       <main>
-        {currentPage === 'home' && <Home wallet={wallet} />}
+        {currentPage === 'home' && <Home wallet={wallet} onAppClick={navigateToDetail} />}
         {currentPage === 'publish' && <Publish wallet={wallet} />}
+        {currentPage === 'myapps' && <MyApps wallet={wallet} onAppClick={navigateToDetail} />}
+        {currentPage === 'dashboard' && <PublisherDashboard wallet={wallet} />}
+        {currentPage === 'detail' && selectedApp && (
+          <AppDetail slug={selectedApp} wallet={wallet} onBack={navigateToHome} />
+        )}
       </main>
     </div>
   )
