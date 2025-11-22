@@ -4,8 +4,12 @@
   "description": "The Graph subgraph for DApp Store",
   "scripts": {
     "codegen": "graph codegen",
+    "codegen:sepolia": "graph codegen subgraph.sepolia.yaml",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ dappstore",
+    "build:sepolia": "graph build subgraph.sepolia.yaml",
+    "auth": "graph auth --studio",
+    "deploy:studio": "graph deploy --studio dappstore",
+    "deploy:sepolia": "graph deploy --studio dappstore subgraph.sepolia.yaml",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 dappstore",
     "create-local": "graph create --node http://localhost:8020/ dappstore",
     "remove-local": "graph remove --node http://localhost:8020/ dappstore",

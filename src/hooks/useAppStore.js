@@ -30,29 +30,35 @@ export function useAppStore(wallet) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar dirección del contrato desde config
+  // Cargar dirección del contrato desde Ignition deployments
   useEffect(() => {
     const loadContractAddress = async () => {
       try {
-        // Intentar cargar desde archivo de configuración
-        const response = await fetch('/src/config/contracts.json');
+        // Intentar cargar desde Ignition deployment (localhost = chain 31337)
+        const chainId = wallet?.chainId || 31337;
+        const response = await fetch(`/ignition/deployments/chain-${chainId}/deployed_addresses.json`);
+        
         if (response.ok) {
-          const config = await response.json();
-          const address = config.contracts?.AppStore?.address;
+          const addresses = await response.json();
+          // Ignition usa el formato: "ModuleName#ContractName"
+          const address = addresses['AppStoreModule#AppStore'];
           if (address) {
             setContractAddress(address);
-            console.log('✅ Contract address loaded:', address);
+            console.log('✅ Contract address loaded from Ignition:', address);
+            return;
           }
         }
       } catch (err) {
-        console.warn('⚠️ Could not load contract config:', err.message);
-        // Usar dirección por defecto para desarrollo local
-        setContractAddress('0x5FbDB2315678afecb367f032d93F642f64180aa3');
+        console.warn('⚠️ Could not load from Ignition deployments:', err.message);
       }
+
+      // Fallback: usar dirección por defecto para desarrollo local
+      console.log('ℹ️ Using fallback address for localhost');
+      setContractAddress('0x5FbDB2315678afecb367f032d93F642f64180aa3');
     };
 
     loadContractAddress();
-  }, []);
+  }, [wallet?.chainId]);
 
   // Crear instancia del contrato cuando hay wallet y address
   useEffect(() => {
