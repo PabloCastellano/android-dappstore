@@ -4,9 +4,9 @@ schema:
 dataSources:
   - kind: ethereum
     name: AppStore
-    network: mainnet # Cambiar según la red (hardhat, sepolia, mainnet)
+    network: hardhat
     source:
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3" # Actualizar con dirección del contrato
+      address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
       abi: AppStore
       startBlock: 0 # Actualizar con el bloque de deployment
     mapping:
@@ -26,18 +26,16 @@ dataSources:
         - name: AppStore
           file: ../artifacts/contracts/AppStore.sol/AppStore.json
       eventHandlers:
-        - event: AppRegistered(indexed address,string,string,uint256)
+        - event: AppRegistered(indexed bytes32,string,indexed address,string,uint256)
           handler: handleAppRegistered
-        - event: VersionPublished(indexed string,uint256,string)
+        - event: VersionPublished(indexed bytes32,string,uint256)
           handler: handleVersionPublished
-        - event: AppPurchased(indexed address,indexed string,uint256)
+        - event: AppPurchased(indexed bytes32,indexed address,uint256,uint256)
           handler: handleAppPurchased
-        - event: AppDownloaded(indexed address,indexed string)
+        - event: AppDownloaded(indexed bytes32,indexed address)
           handler: handleAppDownloaded
-        - event: PriceUpdated(indexed string,uint256)
-          handler: handlePriceUpdated
-        - event: AppDeactivated(indexed string)
-          handler: handleAppDeactivated
-        - event: AppReactivated(indexed string)
-          handler: handleAppReactivated
+        - event: AppUpdated(indexed bytes32,uint256)
+          handler: handleAppUpdated
+        - event: AppStatusChanged(indexed bytes32,bool)
+          handler: handleAppStatusChanged
       file: ./src/mapping.ts

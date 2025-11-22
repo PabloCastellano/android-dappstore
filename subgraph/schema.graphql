@@ -2,7 +2,7 @@
 Schema GraphQL para el subgraph del DApp Store
 """
 
-type App @entity {
+type App @entity(immutable: false) {
   id: ID! # slug
   publisher: Publisher!
   slug: String!
@@ -20,7 +20,7 @@ type App @entity {
   purchases: [Purchase!]! @derivedFrom(field: "app")
 }
 
-type AppVersion @entity {
+type AppVersion @entity(immutable: false) {
   id: ID! # slug-versionCode
   app: App!
   versionCode: Int!
@@ -30,7 +30,7 @@ type AppVersion @entity {
   deprecated: Boolean!
 }
 
-type Publisher @entity {
+type Publisher @entity(immutable: false) {
   id: ID! # address
   address: Bytes!
   apps: [App!]! @derivedFrom(field: "publisher")
@@ -40,7 +40,7 @@ type Publisher @entity {
   createdAt: BigInt!
 }
 
-type Purchase @entity {
+type Purchase @entity(immutable: true) {
   id: ID! # txHash-logIndex
   app: App!
   buyer: User!
@@ -49,7 +49,7 @@ type Purchase @entity {
   transactionHash: Bytes!
 }
 
-type User @entity {
+type User @entity(immutable: false) {
   id: ID! # address
   address: Bytes!
   purchases: [Purchase!]! @derivedFrom(field: "buyer")
@@ -58,7 +58,7 @@ type User @entity {
   createdAt: BigInt!
 }
 
-type Download @entity {
+type Download @entity(immutable: true) {
   id: ID! # txHash-logIndex
   app: App!
   user: Bytes!
@@ -66,7 +66,7 @@ type Download @entity {
   transactionHash: Bytes!
 }
 
-type PriceUpdate @entity {
+type PriceUpdate @entity(immutable: true) {
   id: ID! # txHash-logIndex
   app: App!
   oldPrice: BigInt!
@@ -75,7 +75,7 @@ type PriceUpdate @entity {
   transactionHash: Bytes!
 }
 
-type GlobalStats @entity {
+type GlobalStats @entity(immutable: false) {
   id: ID! # "global"
   totalApps: BigInt!
   totalPublishers: BigInt!

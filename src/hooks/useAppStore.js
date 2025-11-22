@@ -52,9 +52,7 @@ export function useAppStore(wallet) {
         console.warn('⚠️ Could not load from Ignition deployments:', err.message);
       }
 
-      // Fallback: usar dirección por defecto para desarrollo local
-      console.log('ℹ️ Using fallback address for localhost');
-      setContractAddress('0x5FbDB2315678afecb367f032d93F642f64180aa3');
+      console.error('⚠️  Deploy contracts first with: npm run deploy:local');
     };
 
     loadContractAddress();
