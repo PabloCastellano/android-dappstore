@@ -1,1 +1,70 @@
-node_modules
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+
+# Production
+dist/
+build/
+
+# Hardhat
+cache/
+artifacts/
+typechain/
+typechain-types/
+
+# Deployments (opcional: comentar si quieres commitear deployments)
+deployments/
+src/config/contracts.json
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hardhat specific
+.openzeppelin/
+.coverage_artifacts/
+.coverage_cache/
+.coverage_contracts/
+
+# Vite
+.vite/
+
+# PWA
+sw.js.map
+workbox-*.js
+workbox-*.js.map

@@ -1,12 +1,18 @@
 {
   "name": "pwa-appstore",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\""
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "node": "hardhat node"
   },
   "dependencies": {
     "ethers": "^6.6.0",
@@ -15,11 +21,25 @@
     "workbox-window": "^7.4.0"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.2",
+    "@nomicfoundation/hardhat-ethers": "^4.0.3",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@nomicfoundation/hardhat-verify": "^3.0.7",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.0.0",
+    "chai": "^4.3.10",
+    "hardhat": "^3.0.15",
     "postcss": "^8.0.0",
     "prettier": "^2.8.0",
     "tailwindcss": "^4.0.0",
+    "typechain": "^8.3.2",
     "vite": "^5.0.0",
     "workbox-cli": "^6.5.4"
   }

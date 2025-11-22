@@ -1,12 +1,44 @@
-# PWA Decentralized App Store - Boilerplate
+# 🚀 Decentralized App Store - Ethereum + IPFS
 
-PWA App Store Boilerplate
-React + Vite + Tailwind + Workbox
+App Store descentralizada usando **Smart Contracts** (Ethereum), **IPFS** para almacenamiento y **React PWA** para el frontend.
 
-Instrucciones rápidas:
-1) Crear proyecto y pegar los archivos.
-2) `npm install` o `yarn`
-3) `npm run dev` para desarrollo. `npm run build` y `npm run preview` para producción.
+## 🎯 Visión General
+
+Una plataforma completamente descentralizada donde:
+- 📱 Developers publican apps Android (APKs)
+- 💰 Monetización directa con crypto (ETH/tokens)
+- 🔒 Sin censura ni intermediarios
+- 📦 Almacenamiento en IPFS
+- ⛓️ Metadata y pagos on-chain
+- 🔍 Transparencia total
+
+## ⚡ Quick Start
+
+### 1. Instalar dependencias
+```bash
+npm install
+# o
+yarn
+```
+
+### 2. Compilar contratos
+```bash
+npm run compile
+```
+
+### 3. Iniciar desarrollo
+```bash
+# Terminal 1: Nodo Hardhat local
+npm run node
+
+# Terminal 2: Deploy contratos
+npm run deploy:local
+
+# Terminal 3: Frontend
+npm run dev
+```
+
+Ver `QUICK_START.md` para instrucciones detalladas.
 
 Características incluidas:
 - React + Vite
