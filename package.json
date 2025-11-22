@@ -15,7 +15,10 @@
     "node": "hardhat node"
   },
   "dependencies": {
+    "@helia/unixfs": "^6.0.3",
     "ethers": "^6.6.0",
+    "helia": "^6.0.11",
+    "ipfs-http-client": "^60.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "workbox-window": "^7.4.0"

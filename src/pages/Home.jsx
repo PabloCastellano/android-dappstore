@@ -9,9 +9,10 @@ const MOCK_APPS = [
   { slug: 'smiles', name: 'Smiles', price: '2.5 ETH', icon: '/mockup-assets/smiles.png' }
 ]
 
-export default function Home() {
+export default function Home({ wallet }) {
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="grid grid-cols-12 gap-6">
       <section className="col-span-8 bg-white rounded-2xl p-6 shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Popular</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -37,6 +38,7 @@ export default function Home() {
           </div>
         </div>
       </aside>
+      </div>
     </div>
   )
 }
