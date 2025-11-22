@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import AppCard from '../components/AppCard'
+import { useAppStore } from '../hooks/useAppStore'
 
-// ejemplo estático: en un proyecto real, trae los datos del subgraph / contract
+// Apps de ejemplo - se enriquecerán con datos del contrato si existen
 const MOCK_APPS = [
   { slug: 'dicegame', name: 'DiceGame', price: 'Free', icon: '/mockup-assets/dice.png', category: 'games', description: 'Fun dice rolling game' },
   { slug: 'chatty', name: 'Chatty', price: '0.1 ETH', icon: '/mockup-assets/chatty.png', category: 'social', description: 'Decentralized messaging' },
@@ -34,10 +35,50 @@ export default function Home({ wallet, onAppClick }) {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('all')
   const [sortBy, setSortBy] = useState('popular') // 'popular', 'name', 'price'
+  const [apps, setApps] = useState(MOCK_APPS)
+  const [loadingContract, setLoadingContract] = useState(false)
+
+  // Hook del contrato
+  const { getAllAppsFromContract, enrichAppsWithContractData, isReady } = useAppStore(wallet)
+
+  // Cargar datos del contrato cuando esté listo
+  useEffect(() => {
+    const loadContractData = async () => {
+      if (!isReady) {
+        console.log('ℹ️ Contract not ready, showing mock apps')
+        setApps(MOCK_APPS)
+        return
+      }
+
+      setLoadingContract(true)
+      try {
+        // Intentar obtener todas las apps del contrato
+        const contractApps = await getAllAppsFromContract()
+        
+        if (contractApps.length > 0) {
+          // Si hay apps en el contrato, usarlas
+          console.log(`✅ Using ${contractApps.length} apps from contract`)
+          setApps(contractApps)
+        } else {
+          // Si no hay apps registradas, enriquecer mocks con datos del contrato
+          console.log('ℹ️ No apps in contract, enriching mocks...')
+          const enrichedApps = await enrichAppsWithContractData(MOCK_APPS)
+          setApps(enrichedApps)
+        }
+      } catch (err) {
+        console.error('Error loading contract data:', err)
+        setApps(MOCK_APPS)
+      } finally {
+        setLoadingContract(false)
+      }
+    }
+
+    loadContractData()
+  }, [isReady, getAllAppsFromContract, enrichAppsWithContractData])
 
   // Filtrar y ordenar apps
   const filteredApps = useMemo(() => {
-    let filtered = [...MOCK_APPS]
+    let filtered = [...apps]
 
     // Búsqueda por nombre o descripción
     if (searchQuery) {
@@ -72,9 +113,45 @@ export default function Home({ wallet, onAppClick }) {
     }
 
     return filtered
-  }, [searchQuery, selectedCategory, selectedPriceFilter, sortBy])
+  }, [apps, searchQuery, selectedCategory, selectedPriceFilter, sortBy])
+
+  // Contar apps del contrato
+  const contractAppsCount = apps.filter(app => app.fromContract).length
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Contract Status Badge */}
+      {isReady && contractAppsCount > 0 && (
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
+          <span className="text-green-600 text-xl">✓</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-green-900">
+              Conectado al contrato
+            </p>
+            <p className="text-xs text-green-700">
+              {contractAppsCount} de {apps.length} apps cargadas desde blockchain
+            </p>
+          </div>
+          {loadingContract && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+          )}
+        </div>
+      )}
+
+      {!isReady && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-3">
+          <span className="text-yellow-600 text-xl">ℹ️</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-yellow-900">
+              Modo demo
+            </p>
+            <p className="text-xs text-yellow-700">
+              Mostrando apps de ejemplo. Conecta tu wallet para ver apps reales del contrato.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="mb-6 bg-white rounded-2xl p-4 shadow-sm">
         <div className="flex gap-4 items-center">

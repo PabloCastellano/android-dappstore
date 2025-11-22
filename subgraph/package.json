@@ -11,6 +11,7 @@
     "deploy:studio": "graph deploy --studio dappstore",
     "deploy:sepolia": "graph deploy --studio dappstore subgraph.sepolia.yaml",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 dappstore",
+    "local:full": "npm run create-local && npm run deploy-local",
     "create-local": "graph create --node http://localhost:8020/ dappstore",
     "remove-local": "graph remove --node http://localhost:8020/ dappstore",
     "test": "graph test"

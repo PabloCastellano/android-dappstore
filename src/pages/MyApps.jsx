@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../hooks/useAppStore';
 import { downloadFromIPFS, downloadJSONFromIPFS } from '../services/ipfs';
+import AppIcon from '../components/AppIcon';
 
 export default function MyApps({ wallet, onAppClick }) {
   const { checkPurchase } = useAppStore(wallet);
@@ -136,9 +137,13 @@ export default function MyApps({ wallet, onAppClick }) {
                 <div key={app.slug} className="p-6 hover:bg-gray-50 transition">
                   <div className="flex items-center gap-6">
                     {/* Icon */}
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">
-                      {app.icon}
-                    </div>
+                    <AppIcon
+                      src={null}
+                      alt={app.name}
+                      slug={app.slug}
+                      size="lg"
+                      className="flex-shrink-0"
+                    />
 
                     {/* Info */}
                     <div className="flex-1">
