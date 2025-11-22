@@ -1,0 +1,87 @@
+"""
+Schema GraphQL para el subgraph del DApp Store
+"""
+
+type App @entity {
+  id: ID! # slug
+  publisher: Publisher!
+  slug: String!
+  name: String!
+  latestManifestCid: String!
+  latestVersion: AppVersion
+  priceWei: BigInt!
+  priceEth: String!
+  totalDownloads: BigInt!
+  totalRevenue: BigInt!
+  active: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  versions: [AppVersion!]! @derivedFrom(field: "app")
+  purchases: [Purchase!]! @derivedFrom(field: "app")
+}
+
+type AppVersion @entity {
+  id: ID! # slug-versionCode
+  app: App!
+  versionCode: Int!
+  manifestCid: String!
+  publishedAt: BigInt!
+  publishedBy: Bytes!
+  deprecated: Boolean!
+}
+
+type Publisher @entity {
+  id: ID! # address
+  address: Bytes!
+  apps: [App!]! @derivedFrom(field: "publisher")
+  totalApps: BigInt!
+  totalRevenue: BigInt!
+  totalDownloads: BigInt!
+  createdAt: BigInt!
+}
+
+type Purchase @entity {
+  id: ID! # txHash-logIndex
+  app: App!
+  buyer: User!
+  price: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type User @entity {
+  id: ID! # address
+  address: Bytes!
+  purchases: [Purchase!]! @derivedFrom(field: "buyer")
+  totalPurchases: BigInt!
+  totalSpent: BigInt!
+  createdAt: BigInt!
+}
+
+type Download @entity {
+  id: ID! # txHash-logIndex
+  app: App!
+  user: Bytes!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PriceUpdate @entity {
+  id: ID! # txHash-logIndex
+  app: App!
+  oldPrice: BigInt!
+  newPrice: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type GlobalStats @entity {
+  id: ID! # "global"
+  totalApps: BigInt!
+  totalPublishers: BigInt!
+  totalUsers: BigInt!
+  totalPurchases: BigInt!
+  totalDownloads: BigInt!
+  totalRevenue: BigInt!
+  updatedAt: BigInt!
+}

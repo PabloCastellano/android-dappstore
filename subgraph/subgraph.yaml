@@ -1,0 +1,43 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: AppStore
+    network: mainnet # Cambiar según la red (hardhat, sepolia, mainnet)
+    source:
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3" # Actualizar con dirección del contrato
+      abi: AppStore
+      startBlock: 0 # Actualizar con el bloque de deployment
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - App
+        - AppVersion
+        - Publisher
+        - Purchase
+        - User
+        - Download
+        - PriceUpdate
+        - GlobalStats
+      abis:
+        - name: AppStore
+          file: ../artifacts/contracts/AppStore.sol/AppStore.json
+      eventHandlers:
+        - event: AppRegistered(indexed address,string,string,uint256)
+          handler: handleAppRegistered
+        - event: VersionPublished(indexed string,uint256,string)
+          handler: handleVersionPublished
+        - event: AppPurchased(indexed address,indexed string,uint256)
+          handler: handleAppPurchased
+        - event: AppDownloaded(indexed address,indexed string)
+          handler: handleAppDownloaded
+        - event: PriceUpdated(indexed string,uint256)
+          handler: handlePriceUpdated
+        - event: AppDeactivated(indexed string)
+          handler: handleAppDeactivated
+        - event: AppReactivated(indexed string)
+          handler: handleAppReactivated
+      file: ./src/mapping.ts
