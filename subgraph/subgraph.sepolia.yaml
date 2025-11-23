@@ -1,3 +1,6 @@
+# Sepolia Testnet Subgraph Configuration
+# This file should be kept in sync with subgraph.yaml (mainnet/localhost)
+# Only network, address, and startBlock should differ
 specVersion: 0.0.5
 schema:
   file: ./schema.graphql
@@ -6,9 +9,9 @@ dataSources:
     name: AppStore
     network: sepolia
     source:
-      address: "YOUR_SEPOLIA_CONTRACT_ADDRESS" # Get from: ignition/deployments/chain-11155111/deployed_addresses.json
+      address: "0x0A40FF5b8CF2CA06a5E39e19b669B6a06c8Ce000" # Get from: ignition/deployments/chain-11155111/deployed_addresses.json
       abi: AppStore
-      startBlock: 0 # Get deployment block from Sepolia Etherscan where the contract was deployed
+      startBlock: 9688540 # Get deployment block from Sepolia Etherscan where the contract was deployed
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -17,27 +20,19 @@ dataSources:
         - App
         - AppVersion
         - Publisher
-        - Purchase
         - User
         - Download
-        - PriceUpdate
         - GlobalStats
       abis:
         - name: AppStore
           file: ../artifacts/contracts/AppStore.sol/AppStore.json
       eventHandlers:
-        - event: AppRegistered(indexed address,string,string,uint256)
+        - event: AppRegistered(indexed bytes32,string,indexed address,string)
           handler: handleAppRegistered
-        - event: VersionPublished(indexed string,uint256,string)
+        - event: VersionPublished(indexed bytes32,string,uint256)
           handler: handleVersionPublished
-        - event: AppPurchased(indexed address,indexed string,uint256)
-          handler: handleAppPurchased
-        - event: AppDownloaded(indexed address,indexed string)
+        - event: AppDownloaded(indexed bytes32,indexed address)
           handler: handleAppDownloaded
-        - event: PriceUpdated(indexed string,uint256)
-          handler: handlePriceUpdated
-        - event: AppDeactivated(indexed string)
-          handler: handleAppDeactivated
-        - event: AppReactivated(indexed string)
-          handler: handleAppReactivated
+        - event: AppStatusChanged(indexed bytes32,bool)
+          handler: handleAppStatusChanged
       file: ./src/mapping.ts

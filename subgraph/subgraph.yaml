@@ -1,3 +1,6 @@
+# Mainnet/Localhost Subgraph Configuration
+# Keep subgraph.sepolia.yaml in sync with this file
+# Only network, address, and startBlock should differ between configs
 specVersion: 0.0.5
 schema:
   file: ./schema.graphql
