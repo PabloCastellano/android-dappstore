@@ -1,0 +1,43 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: AppStore
+    network: sepolia
+    source:
+      address: "YOUR_SEPOLIA_CONTRACT_ADDRESS" # Get from: ignition/deployments/chain-11155111/deployed_addresses.json
+      abi: AppStore
+      startBlock: 0 # Get deployment block from Sepolia Etherscan where the contract was deployed
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - App
+        - AppVersion
+        - Publisher
+        - Purchase
+        - User
+        - Download
+        - PriceUpdate
+        - GlobalStats
+      abis:
+        - name: AppStore
+          file: ../artifacts/contracts/AppStore.sol/AppStore.json
+      eventHandlers:
+        - event: AppRegistered(indexed address,string,string,uint256)
+          handler: handleAppRegistered
+        - event: VersionPublished(indexed string,uint256,string)
+          handler: handleVersionPublished
+        - event: AppPurchased(indexed address,indexed string,uint256)
+          handler: handleAppPurchased
+        - event: AppDownloaded(indexed address,indexed string)
+          handler: handleAppDownloaded
+        - event: PriceUpdated(indexed string,uint256)
+          handler: handlePriceUpdated
+        - event: AppDeactivated(indexed string)
+          handler: handleAppDeactivated
+        - event: AppReactivated(indexed string)
+          handler: handleAppReactivated
+      file: ./src/mapping.ts
