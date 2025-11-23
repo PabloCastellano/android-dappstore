@@ -1,78 +1,121 @@
 # 🚀 Decentralized App Store - Ethereum + IPFS
 
-App Store descentralizada usando **Smart Contracts** (Ethereum), **IPFS** para almacenamiento y **React PWA** para el frontend.
+Decentralized App Store using **Smart Contracts** (Ethereum), **IPFS** for storage, and **React PWA** for the frontend.
 
-## 🎯 Visión General
+## 🎯 Overview
 
-Una plataforma completamente descentralizada donde:
-- 📱 Developers publican apps Android (APKs)
-- 💰 Monetización directa con crypto (ETH/tokens)
-- 🔒 Sin censura ni intermediarios
-- 📦 Almacenamiento en IPFS
-- ⛓️ Metadata y pagos on-chain
-- 🔍 Transparencia total
+A fully decentralized platform where:
+- 📱 Developers publish Android apps (APKs)
+- 💰 Direct monetization with crypto (ETH/tokens)
+- 🔒 No censorship or intermediaries
+- 📦 IPFS storage
+- ⛓️ On-chain metadata and payments
+- 🔍 Full transparency
 
 ## ⚡ Quick Start
 
-### 1. Instalar dependencias
+### 1. Install dependencies
 ```bash
 npm install
-# o
+# or
 yarn
 ```
 
-### 2. Compilar contratos
+### 2. Compile contracts
 ```bash
 npm run compile
 ```
 
-### 3. Iniciar desarrollo
+### 3. Start development
 ```bash
-# Terminal 1: Nodo Hardhat local
+# Terminal 1: Local Hardhat node
 npm run node
 
-# Terminal 2: Deploy contratos
+# Terminal 2: Deploy contracts
 npm run deploy:local
 
 # Terminal 3: Frontend
 npm run dev
 ```
 
-Ver `QUICK_START.md` para instrucciones detalladas.
+See `QUICK_START.md` for detailed instructions.
 
-Características incluidas:
+Included features:
 - React + Vite
 - Tailwind CSS
 - PWA manifest + service worker (Workbox)
-- Archivo de ejemplo `sw.js` con caching para IPFS
-- Registro del service worker en `serviceWorkerRegistration.js`
-- Mock UI y uso de la imagen mockup subida por ti
+- Example `sw.js` file with IPFS caching
+- Service worker registration in `serviceWorkerRegistration.js`
+- Mock UI and usage of uploaded mockup image
 
 ## Smart Contracts
 
-Los contratos están implementados en `/contracts`:
-- **AppStore.sol** - Contrato principal con pagos en ETH
-- **AppStoreERC20.sol** - Soporte para pagos con tokens ERC20
+Contracts are implemented in `/contracts`:
+- **AppStore.sol** - Main contract with ETH payments
+- **AppStoreERC20.sol** - Support for ERC20 token payments
 
-### Comandos disponibles:
-```bash
-npm run compile      # Compilar contratos
-npm test            # Ejecutar tests
-npm run node        # Iniciar nodo local Hardhat
-npm run deploy:local    # Deploy en localhost
-npm run deploy:sepolia  # Deploy en Sepolia testnet
+## Hardhat Usage
+
+### Running Tests
+
+To run all the tests in the project, execute the following command:
+
+```shell
+npx hardhat test
 ```
 
-Ver `/contracts/README.md` para documentación completa.
+You can also selectively run the Solidity or `node:test` tests:
 
-## 🏗️ Arquitectura
+```shell
+npx hardhat test solidity
+npx hardhat test nodejs
+```
+
+### Make a deployment to Sepolia
+
+This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+
+To run the deployment to a local chain:
+
+```shell
+npx hardhat ignition deploy ignition/modules/Counter.ts
+```
+
+To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+
+You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+
+To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+
+```shell
+npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+```
+
+After setting the variable, you can run the deployment with the Sepolia network:
+
+```shell
+npx hardhat ignition deploy --network sepolia ignition/modules/AppStore.ts
+```
+
+### Available commands:
+```bash
+npm run compile      # Compile contracts
+npm test            # Run tests
+npm run node        # Start local Hardhat node
+npm run deploy:local    # Deploy on localhost
+npm run deploy:sepolia  # Deploy on Sepolia testnet
+```
+
+See `/contracts/README.md` for complete documentation.
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      FRONTEND (React PWA)                    │
-│  - UI para descubrir y comprar apps                         │
-│  - Conexión con MetaMask/WalletConnect                      │
-│  - Service Worker para caching IPFS                         │
+│  - UI for discovering and purchasing apps                   │
+│  - MetaMask/WalletConnect integration                       │
+│  - Service Worker for IPFS caching                          │
 └─────────────────┬───────────────────────────────────────────┘
                   │
                   ├─── ethers.js ───┐
@@ -83,9 +126,9 @@ Ver `/contracts/README.md` para documentación completa.
 │   SMART CONTRACTS (L2)     │      │
 │  - AppStore.sol            │◄─────┘
 │  - AppStoreERC20.sol       │
-│  - Registro de apps        │
-│  - Sistema de pagos        │
-│  - Versionado              │
+│  - App registry            │
+│  - Payment system          │
+│  - Versioning              │
 └─────────────┬──────────────┘
               │
               │ Events
@@ -94,7 +137,7 @@ Ver `/contracts/README.md` para documentación completa.
 │   THE GRAPH (Indexer)   │
 │  - Subgraph             │
 │  - GraphQL API          │
-│  - Búsqueda rápida      │
+│  - Fast search          │
 └─────────────────────────┘
 
 ┌─────────────────────────┐
@@ -105,66 +148,66 @@ Ver `/contracts/README.md` para documentación completa.
 └─────────────────────────┘
 ```
 
-## 📋 Documentación
+## 📋 Documentation
 
-- **`IMPLEMENTATION_COMPLETE.md`** - ✅ Resumen completo de implementación
-- **`IPFS_IMPLEMENTATION.md`** - ✅ Resumen de integración IPFS
-- **`FRONTEND_INTEGRATION.md`** - ✅ Resumen de integración frontend
-- **`APP_DETAIL_GUIDE.md`** - 📱 Guía de página de detalle
-- **`QUICK_START.md`** - 🚀 Guía de inicio rápido
-- **`IPFS_GUIDE.md`** - 📦 Guía completa de IPFS
-- **`ACCESSING_UI.md`** - 🎨 Cómo acceder a la UI
-- **`DEPLOYMENT_GUIDE.md`** - 🚀 Guía de deployment
-- **`CONTRACTS_SUMMARY.md`** - 📊 Documentación técnica de contratos
-- **`contracts/README.md`** - 📝 Detalles de contratos Solidity
-- **`subgraph/README.md`** - 📊 Documentación del subgraph
-- **`ROADMAP.md`** - 🗺️ Roadmap del proyecto
+- **`IMPLEMENTATION_COMPLETE.md`** - ✅ Complete implementation summary
+- **`IPFS_IMPLEMENTATION.md`** - ✅ IPFS integration summary
+- **`FRONTEND_INTEGRATION.md`** - ✅ Frontend integration summary
+- **`APP_DETAIL_GUIDE.md`** - 📱 App detail page guide
+- **`QUICK_START.md`** - 🚀 Quick start guide
+- **`IPFS_GUIDE.md`** - 📦 Complete IPFS guide
+- **`ACCESSING_UI.md`** - 🎨 How to access the UI
+- **`DEPLOYMENT_GUIDE.md`** - 🚀 Deployment guide
+- **`CONTRACTS_SUMMARY.md`** - 📊 Technical contracts documentation
+- **`contracts/README.md`** - 📝 Solidity contracts details
+- **`subgraph/README.md`** - 📊 Subgraph documentation
+- **`ROADMAP.md`** - 🗺️ Project roadmap
 
-## ✅ Estado del Proyecto
+## ✅ Project Status
 
-### Completado (100%)
-- ✅ Smart contracts implementados y compilados
-- ✅ Tests básicos de contratos escritos
-- ✅ Scripts de deployment configurados
-- ✅ Integración IPFS completa (Pinata)
-- ✅ Servicio de upload/download de APKs
-- ✅ Sistema de manifests con firma EIP-712
-- ✅ Componente APKUploader con wizard
-- ✅ Hook useWallet funcional (MetaMask)
-- ✅ Hook useAppStore funcional
-- ✅ UI de wallet en header
-- ✅ Página de publicación completa
-- ✅ Página de detalle de app
-- ✅ Sistema de compra con ETH
-- ✅ Sistema de descarga de APKs
-- ✅ Verificación de integridad (SHA-256)
-- ✅ Sistema de búsqueda
-- ✅ Filtros por categoría y precio
-- ✅ Ordenamiento de apps
-- ✅ Página de historial de compras
-- ✅ Dashboard de publisher completo
-- ✅ Gestión de apps existentes
-- ✅ Publicación de nuevas versiones
-- ✅ Actualización de precios
-- ✅ Estadísticas y analytics
-- ✅ Navegación completa
-- ✅ Subgraph de The Graph (schema, mappings, cliente)
-- ✅ Hooks React para subgraph
-- ✅ Queries GraphQL completas
-- ✅ Documentación completa
+### Completed (100%)
+- ✅ Smart contracts implemented and compiled
+- ✅ Basic contract tests written
+- ✅ Deployment scripts configured
+- ✅ Complete IPFS integration (Pinata)
+- ✅ APK upload/download service
+- ✅ Manifest system with EIP-712 signing
+- ✅ APKUploader component with wizard
+- ✅ Functional useWallet hook (MetaMask)
+- ✅ Functional useAppStore hook
+- ✅ Wallet UI in header
+- ✅ Complete publication page
+- ✅ App detail page
+- ✅ Purchase system with ETH
+- ✅ APK download system
+- ✅ Integrity verification (SHA-256)
+- ✅ Search system
+- ✅ Category and price filters
+- ✅ App sorting
+- ✅ Purchase history page
+- ✅ Complete publisher dashboard
+- ✅ Existing app management
+- ✅ New version publishing
+- ✅ Price updates
+- ✅ Statistics and analytics
+- ✅ Complete navigation
+- ✅ The Graph subgraph (schema, mappings, client)
+- ✅ React hooks for subgraph
+- ✅ Complete GraphQL queries
+- ✅ Complete documentation
 
-### Extras Opcionales
-- ⏳ Deployment del subgraph (manual)
-- ⏳ Cliente Android nativo
-- ⏳ Testing E2E completo
-- ⏳ Auditoría de seguridad
-- ⏳ Deployment en testnet/mainnet
-- ⏳ Sistema de reviews y ratings
+### Optional Extras
+- ⏳ Subgraph deployment (manual)
+- ⏳ Native Android client
+- ⏳ Complete E2E testing
+- ⏳ Security audit
+- ⏳ Testnet/mainnet deployment
+- ⏳ Reviews and ratings system
 
 
 ```
-// Exporta un componente React por compatibilidad con la vista previa en canvas.
-// Aquí devolvemos el App principal para que se pueda previsualizar rápidamente.
+// Exports a React component for canvas preview compatibility.
+// Here we return the main App so it can be quickly previewed.
 import ReactPreview from './src/App.jsx'
 export default ReactPreview
 ```
