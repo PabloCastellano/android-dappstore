@@ -1,5 +1,5 @@
 /**
- * Componente para subir APKs a IPFS y generar manifests
+ * Component for uploading APKs to IPFS and generating manifests
  */
 
 import React, { useState } from 'react';
@@ -35,25 +35,25 @@ export default function APKUploader({ onComplete, wallet }) {
   const [manifest, setManifest] = useState(null);
   const [manifestCID, setManifestCID] = useState(null);
 
-  // Manejar selección de APK
+  // Handle APK selection
   const handleAPKSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     if (!file.name.endsWith('.apk')) {
-      setError('Por favor selecciona un archivo APK válido');
+      setError('Please select a valid APK file');
       return;
     }
 
     setError(null);
     setApkFile(file);
     
-    // Extraer información del APK
+    // Extract APK information
     try {
       const info = await extractAPKInfo(file);
       setApkInfo(info);
       
-      // Pre-llenar algunos campos
+      // Pre-fill some fields
       setFormData(prev => ({
         ...prev,
         package: info.package,
@@ -64,24 +64,24 @@ export default function APKUploader({ onComplete, wallet }) {
       }));
     } catch (err) {
       console.error('Error extracting APK info:', err);
-      setError('Error al analizar el APK. Continúa manualmente.');
+      setError('Error parsing APK. Continue manually.');
     }
   };
 
-  // Manejar selección de icono
+  // Handle icon selection
   const handleIconSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('Por favor selecciona una imagen válida');
+      setError('Please select a valid image');
       return;
     }
 
     setIconFile(file);
   };
 
-  // Manejar cambios en el formulario
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -89,7 +89,7 @@ export default function APKUploader({ onComplete, wallet }) {
       [name]: value
     }));
 
-    // Auto-generar slug desde el nombre
+    // Auto-generate slug from name
     if (name === 'name' && !formData.slug) {
       setFormData(prev => ({
         ...prev,
@@ -98,26 +98,26 @@ export default function APKUploader({ onComplete, wallet }) {
     }
   };
 
-  // Paso 1 -> 2
+  // Step 1 -> 2
   const handleNextToMetadata = () => {
     if (!apkFile) {
-      setError('Por favor selecciona un archivo APK');
+      setError('Please select an APK file');
       return;
     }
     setError(null);
     setStep(2);
   };
 
-  // Paso 2 -> 3
+  // Step 2 -> 3
   const handleNextToReview = () => {
-    // Validar campos requeridos
+    // Validate required fields
     if (!formData.name || !formData.slug || !formData.package) {
-      setError('Por favor completa todos los campos requeridos');
+      setError('Please complete all required fields');
       return;
     }
 
     if (!wallet.isConnected) {
-      setError('Por favor conecta tu wallet');
+      setError('Please connect your wallet');
       return;
     }
 
@@ -125,10 +125,10 @@ export default function APKUploader({ onComplete, wallet }) {
     setStep(3);
   };
 
-  // Paso 3 -> 4: Subir a IPFS
+  // Step 3 -> 4: Upload to IPFS
   const handleUploadToIPFS = async () => {
     if (!wallet.isConnected) {
-      setError('Wallet no conectada');
+      setError('Wallet not connected');
       return;
     }
 
@@ -137,7 +137,7 @@ export default function APKUploader({ onComplete, wallet }) {
     setUploadProgress(0);
 
     try {
-      // 1. Subir APK a IPFS
+      // 1. Upload APK to IPFS
       setUploadProgress(10);
       console.log('📤 Uploading APK to IPFS...');
       
@@ -152,7 +152,7 @@ export default function APKUploader({ onComplete, wallet }) {
 
       setUploadProgress(40);
 
-      // 2. Subir icono a IPFS (si existe)
+      // 2. Upload icon to IPFS (if exists)
       let iconCID = '';
       if (iconFile) {
         console.log('📤 Uploading icon to IPFS...');
@@ -168,7 +168,7 @@ export default function APKUploader({ onComplete, wallet }) {
 
       setUploadProgress(60);
 
-      // 3. Crear manifest
+      // 3. Create manifest
       console.log('📝 Creating manifest...');
       const manifestData = createManifest(
         {
@@ -185,22 +185,22 @@ export default function APKUploader({ onComplete, wallet }) {
 
       setUploadProgress(70);
 
-      // 4. Firmar manifest
+      // 4. Sign manifest
       console.log('✍️ Signing manifest...');
       const signature = await signManifest(manifestData, wallet.signer, wallet.chainId);
       manifestData.signature = signature;
 
       setUploadProgress(80);
 
-      // 5. Validar manifest
+      // 5. Validate manifest
       const validation = validateManifest(manifestData);
       if (!validation.valid) {
-        throw new Error(`Manifest inválido: ${validation.errors.join(', ')}`);
+        throw new Error(`Invalid manifest: ${validation.errors.join(', ')}`);
       }
 
       setUploadProgress(90);
 
-      // 6. Subir manifest a IPFS
+      // 6. Upload manifest to IPFS
       console.log('📤 Uploading manifest to IPFS...');
       const manifestResult = await uploadJSONToPinata(manifestData, {
         name: `${formData.slug}-manifest.json`,
@@ -218,7 +218,7 @@ export default function APKUploader({ onComplete, wallet }) {
       setManifestCID(manifestResult.cid);
       setStep(4);
 
-      // Callback con los resultados
+      // Callback with results
       if (onComplete) {
         onComplete({
           manifest: manifestData,
@@ -230,7 +230,7 @@ export default function APKUploader({ onComplete, wallet }) {
 
     } catch (err) {
       console.error('❌ Upload error:', err);
-      setError(err.message || 'Error al subir archivos a IPFS');
+      setError(err.message || 'Error uploading files to IPFS');
     } finally {
       setUploading(false);
     }
@@ -273,7 +273,7 @@ export default function APKUploader({ onComplete, wallet }) {
         {/* Step 1: Upload APK */}
         {step === 1 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">1. Selecciona el APK</h2>
+            <h2 className="text-2xl font-bold">1. Select APK</h2>
             
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <input
@@ -286,11 +286,11 @@ export default function APKUploader({ onComplete, wallet }) {
               <label htmlFor="apk-upload" className="cursor-pointer">
                 <div className="text-6xl mb-4">📦</div>
                 <p className="text-lg font-medium mb-2">
-                  {apkFile ? apkFile.name : 'Click para seleccionar APK'}
+                  {apkFile ? apkFile.name : 'Click to select APK'}
                 </p>
                 {apkFile && (
                   <p className="text-sm text-gray-500">
-                    Tamaño: {formatFileSize(apkFile.size)}
+                    Size: {formatFileSize(apkFile.size)}
                   </p>
                 )}
               </label>
@@ -298,10 +298,10 @@ export default function APKUploader({ onComplete, wallet }) {
 
             {apkInfo && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold mb-2">Información del APK:</h3>
+                <h3 className="font-semibold mb-2">APK Information:</h3>
                 <ul className="text-sm space-y-1">
                   <li>Package: {apkInfo.package}</li>
-                  <li>Versión: {apkInfo.version} (code: {apkInfo.versionCode})</li>
+                  <li>Version: {apkInfo.version} (code: {apkInfo.versionCode})</li>
                   <li>SDK: {apkInfo.min_sdk} - {apkInfo.target_sdk}</li>
                   <li>SHA-256: {apkInfo.sha256.slice(0, 16)}...</li>
                 </ul>
@@ -313,7 +313,7 @@ export default function APKUploader({ onComplete, wallet }) {
               disabled={!apkFile}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400"
             >
-              Siguiente →
+              Next →
             </button>
           </div>
         )}
@@ -321,11 +321,11 @@ export default function APKUploader({ onComplete, wallet }) {
         {/* Step 2: Metadata */}
         {step === 2 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">2. Información de la App</h2>
+            <h2 className="text-2xl font-bold">2. App Information</h2>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium mb-2">Nombre *</label>
+                <label className="block text-sm font-medium mb-2">Name *</label>
                 <input
                   type="text"
                   name="name"
@@ -362,7 +362,7 @@ export default function APKUploader({ onComplete, wallet }) {
               </div>
 
               <div className="col-span-2">
-                <label className="block text-sm font-medium mb-2">Descripción</label>
+                <label className="block text-sm font-medium mb-2">Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
@@ -373,7 +373,7 @@ export default function APKUploader({ onComplete, wallet }) {
               </div>
 
               <div className="col-span-2">
-                <label className="block text-sm font-medium mb-2">Icono</label>
+                <label className="block text-sm font-medium mb-2">Icon</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -413,13 +413,13 @@ export default function APKUploader({ onComplete, wallet }) {
                 onClick={() => setStep(1)}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300"
               >
-                ← Atrás
+                ← Back
               </button>
               <button
                 onClick={handleNextToReview}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
               >
-                Siguiente →
+                Next →
               </button>
             </div>
           </div>
@@ -428,7 +428,7 @@ export default function APKUploader({ onComplete, wallet }) {
         {/* Step 3: Review */}
         {step === 3 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">3. Revisar y Confirmar</h2>
+            <h2 className="text-2xl font-bold">3. Review and Confirm</h2>
             
             <div className="bg-gray-50 rounded-lg p-6 space-y-4">
               <div>
@@ -439,10 +439,10 @@ export default function APKUploader({ onComplete, wallet }) {
               <div>
                 <h3 className="font-semibold mb-2">App Info</h3>
                 <ul className="text-sm space-y-1">
-                  <li><strong>Nombre:</strong> {formData.name}</li>
+                  <li><strong>Name:</strong> {formData.name}</li>
                   <li><strong>Slug:</strong> {formData.slug}</li>
                   <li><strong>Package:</strong> {formData.package}</li>
-                  <li><strong>Versión:</strong> {formData.version} (code: {formData.versionCode})</li>
+                  <li><strong>Version:</strong> {formData.version} (code: {formData.versionCode})</li>
                 </ul>
               </div>
 
@@ -454,8 +454,8 @@ export default function APKUploader({ onComplete, wallet }) {
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
-                ⚠️ Los archivos se subirán a IPFS (Pinata) y se generará un manifest firmado.
-                Este proceso puede tardar varios minutos dependiendo del tamaño del APK.
+                ⚠️ Files will be uploaded to IPFS (Pinata) and a signed manifest will be generated.
+                This process may take several minutes depending on APK size.
               </p>
             </div>
 
@@ -464,14 +464,14 @@ export default function APKUploader({ onComplete, wallet }) {
                 onClick={() => setStep(2)}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300"
               >
-                ← Atrás
+                ← Back
               </button>
               <button
                 onClick={handleUploadToIPFS}
                 disabled={uploading}
                 className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400"
               >
-                {uploading ? 'Subiendo...' : 'Subir a IPFS →'}
+                {uploading ? 'Uploading...' : 'Upload to IPFS →'}
               </button>
             </div>
           </div>
@@ -481,10 +481,10 @@ export default function APKUploader({ onComplete, wallet }) {
         {step === 4 && (
           <div className="space-y-6 text-center">
             <div className="text-6xl mb-4">✅</div>
-            <h2 className="text-2xl font-bold">¡Upload Completo!</h2>
+            <h2 className="text-2xl font-bold">Upload Complete!</h2>
             
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-left">
-              <h3 className="font-semibold mb-4">Información del Manifest:</h3>
+              <h3 className="font-semibold mb-4">Manifest Information:</h3>
               <div className="space-y-2 text-sm">
                 <div>
                   <strong>Manifest CID:</strong>
@@ -505,7 +505,7 @@ export default function APKUploader({ onComplete, wallet }) {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 Usa el <strong>Manifest CID</strong> para registrar la app en el smart contract.
+                💡 Use the <strong>Manifest CID</strong> to register the app on the smart contract.
               </p>
             </div>
 
@@ -519,7 +519,7 @@ export default function APKUploader({ onComplete, wallet }) {
               }}
               className="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700"
             >
-              Subir Otra App
+              Upload Another App
             </button>
           </div>
         )}
@@ -535,11 +535,11 @@ export default function APKUploader({ onComplete, wallet }) {
             </div>
             <p className="text-center text-sm text-gray-600 mt-2">
               {uploadProgress}% - {
-                uploadProgress < 40 ? 'Subiendo APK...' :
-                uploadProgress < 60 ? 'Subiendo icono...' :
-                uploadProgress < 80 ? 'Creando manifest...' :
-                uploadProgress < 100 ? 'Subiendo manifest...' :
-                '¡Completo!'
+                uploadProgress < 40 ? 'Uploading APK...' :
+                uploadProgress < 60 ? 'Uploading icon...' :
+                uploadProgress < 80 ? 'Creating manifest...' :
+                uploadProgress < 100 ? 'Uploading manifest...' :
+                'Complete!'
               }
             </p>
           </div>

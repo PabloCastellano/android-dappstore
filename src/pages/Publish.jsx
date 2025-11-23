@@ -1,6 +1,6 @@
 /**
- * Página para publicar apps
- * Combina APKUploader con RegisterApp
+ * Page for publishing apps
+ * Combines APKUploader with RegisterApp
  */
 
 import React, { useState } from 'react';
@@ -34,7 +34,7 @@ export default function Publish({ wallet }) {
 
       if (result.success) {
         setTxHash(result.txHash);
-        alert('¡App registrada exitosamente en blockchain!');
+        alert('App successfully registered on blockchain!');
       } else {
         alert(`Error: ${result.error}`);
       }
@@ -49,9 +49,9 @@ export default function Publish({ wallet }) {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Publicar App</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Publish App</h1>
           <p className="text-gray-600">
-            Sube tu APK a IPFS y regístrala en el blockchain
+            Upload your APK to Filecoin and register it on the blockchain
           </p>
         </div>
 
@@ -61,11 +61,11 @@ export default function Publish({ wallet }) {
         {/* Register on Blockchain */}
         {uploadResult && !txHash && (
           <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold mb-4">Paso Final: Registrar en Blockchain</h2>
+            <h2 className="text-2xl font-bold mb-4">Final Step: Register on Blockchain</h2>
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-blue-800 mb-2">
-                Tu app ha sido subida a IPFS exitosamente. Ahora debes registrarla en el smart contract.
+                Your app has been uploaded to Filecoin successfully. Now you must register it on the smart contract.
               </p>
               <div className="text-xs font-mono space-y-1">
                 <div><strong>Manifest CID:</strong> {uploadResult.manifestCID}</div>
@@ -112,7 +112,7 @@ export default function Publish({ wallet }) {
               }}
               className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700"
             >
-              Publicar Otra App
+              Publish Another App
             </button>
           </div>
         )}
