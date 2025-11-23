@@ -1,109 +1,77 @@
 /**
  * Página de detalle de una app
- * Muestra información completa, permite comprar y descargar
+ * Muestra información completa, permite descargar
  */
 
 import React, { useState, useEffect } from 'react';
+import { useApp } from '../hooks/useSubgraph';
 import { useAppStore } from '../hooks/useAppStore';
 import { downloadFromIPFS, downloadJSONFromIPFS, verifyFileIntegrity } from '../services/ipfs';
 
 export default function AppDetail({ slug, wallet, onBack }) {
-  const { getApp, purchaseApp, checkPurchase, getVersions } = useAppStore(wallet);
+  // Hook del subgraph para obtener datos de la app
+  const { app: subgraphApp, loading: subgraphLoading, error: subgraphError } = useApp(slug);
   
-  const [app, setApp] = useState(null);
+  // Hook del contrato para interacciones (descargas, etc)
+  const { downloadApp } = useAppStore(wallet);
+  
   const [manifest, setManifest] = useState(null);
-  const [versions, setVersions] = useState([]);
-  const [hasPurchased, setHasPurchased] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState(null);
 
-  // Cargar datos de la app
+  // Cargar manifest cuando la app esté disponible
   useEffect(() => {
-    loadAppData();
-  }, [slug, wallet?.address]);
+    if (subgraphApp && subgraphApp.latestManifestCid) {
+      loadManifest();
+    }
+  }, [subgraphApp]);
 
-  const loadAppData = async () => {
-    setLoading(true);
-    setError(null);
-
+  const loadManifest = async () => {
     try {
-      // 1. Obtener datos del contrato
-      const appData = await getApp(slug);
-      setApp(appData);
-
-      // 2. Descargar manifest desde IPFS
-      const manifestData = await downloadJSONFromIPFS(appData.latestManifestCid);
+      console.log('📥 Descargando manifest desde IPFS:', subgraphApp.latestManifestCid);
+      const manifestData = await downloadJSONFromIPFS(subgraphApp.latestManifestCid);
       setManifest(manifestData);
-
-      // 3. Verificar si el usuario ya compró la app
-      if (wallet?.address) {
-        const purchased = await checkPurchase(slug);
-        setHasPurchased(purchased);
-      }
-
-      // 4. Obtener historial de versiones
-      const versionHistory = await getVersions(slug);
-      setVersions(versionHistory);
-
-      console.log('✅ App data loaded:', { appData, manifestData, purchased: hasPurchased });
+      console.log('✅ Manifest cargado:', manifestData);
     } catch (err) {
-      console.error('❌ Error loading app:', err);
-      setError('Error al cargar la aplicación');
-    } finally {
-      setLoading(false);
+      console.error('❌ Error descargando manifest:', err);
+      // No es crítico, podemos mostrar la app sin el manifest completo
     }
   };
 
-  // Comprar app
-  const handlePurchase = async () => {
+  // Descargar app (registra en el contrato)
+  const handleDownloadApp = async () => {
     if (!wallet?.isConnected) {
-      setError('Conecta tu wallet para comprar');
+      setError('Conecta tu wallet para descargar');
       return;
     }
 
-    if (!app) return;
-
-    setPurchasing(true);
-    setError(null);
-
     try {
-      console.log('💰 Purchasing app:', slug, 'Price:', app.priceEth);
-
-      const result = await purchaseApp(slug, app.priceEth);
-
+      setError(null);
+      console.log('📥 Registrando descarga en blockchain...');
+      
+      const result = await downloadApp(slug);
+      
       if (result.success) {
         setTxHash(result.txHash);
-        setHasPurchased(true);
-        console.log('✅ Purchase successful! Tx:', result.txHash);
+        console.log('✅ Descarga registrada! Tx:', result.txHash);
         
-        // Recargar datos
-        await loadAppData();
+        // Ahora descargar el APK
+        await handleDownloadAPK();
       } else {
-        setError(result.error || 'Error al comprar la app');
+        setError(result.error || 'Error al registrar la descarga');
       }
     } catch (err) {
-      console.error('❌ Error purchasing:', err);
-      setError(err.message || 'Error al comprar la app');
-    } finally {
-      setPurchasing(false);
+      console.error('❌ Error registrando descarga:', err);
+      setError(err.message || 'Error al registrar la descarga');
     }
   };
 
-  // Descargar APK
-  const handleDownload = async () => {
+  // Descargar APK desde IPFS
+  const handleDownloadAPK = async () => {
     if (!manifest) {
       setError('Manifest no disponible');
-      return;
-    }
-
-    // Verificar si la app es gratis o si el usuario ya la compró
-    const isFree = app?.priceEth === '0.0' || app?.priceWei === '0';
-    if (!isFree && !hasPurchased) {
-      setError('Debes comprar la app primero');
       return;
     }
 
@@ -112,26 +80,28 @@ export default function AppDetail({ slug, wallet, onBack }) {
     setError(null);
 
     try {
-      console.log('📥 Downloading APK from IPFS:', manifest.apk_cid);
+      console.log('📥 Descargando APK desde IPFS:', manifest.apk_cid);
 
       // 1. Descargar APK
       setDownloadProgress(20);
       const apkBlob = await downloadFromIPFS(manifest.apk_cid);
       
       setDownloadProgress(60);
-      console.log('✅ APK downloaded, size:', apkBlob.size);
+      console.log('✅ APK descargado, tamaño:', apkBlob.size);
 
       // 2. Verificar integridad
-      console.log('🔍 Verifying integrity...');
-      const isValid = await verifyFileIntegrity(apkBlob, manifest.apk_sha256);
-      
-      setDownloadProgress(80);
+      if (manifest.apk_sha256) {
+        console.log('🔍 Verificando integridad...');
+        const isValid = await verifyFileIntegrity(apkBlob, manifest.apk_sha256);
+        
+        setDownloadProgress(80);
 
-      if (!isValid) {
-        throw new Error('⚠️ Verificación de integridad falló. El archivo puede estar corrupto.');
+        if (!isValid) {
+          throw new Error('⚠️ Verificación de integridad falló. El archivo puede estar corrupto.');
+        }
+
+        console.log('✅ Integridad verificada!');
       }
-
-      console.log('✅ Integrity verified!');
 
       // 3. Descargar archivo
       setDownloadProgress(100);
@@ -155,7 +125,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
   };
 
   // Loading state
-  if (loading) {
+  if (subgraphLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
@@ -169,14 +139,14 @@ export default function AppDetail({ slug, wallet, onBack }) {
   }
 
   // Error state
-  if (!app || !manifest) {
+  if (subgraphError || !subgraphApp) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
             <div className="text-6xl mb-4">⚠️</div>
             <h2 className="text-2xl font-bold text-red-900 mb-2">App no encontrada</h2>
-            <p className="text-red-700 mb-4">{error || 'No se pudo cargar la aplicación'}</p>
+            <p className="text-red-700 mb-4">{subgraphError || error || 'No se pudo cargar la aplicación'}</p>
             <button
               onClick={onBack}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -189,8 +159,8 @@ export default function AppDetail({ slug, wallet, onBack }) {
     );
   }
 
-  const isFree = app.priceEth === '0.0' || app.priceWei === '0';
-  const canDownload = isFree || hasPurchased;
+  // En el contrato simplificado, todas las apps son gratuitas
+  const canDownload = true;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -210,10 +180,10 @@ export default function AppDetail({ slug, wallet, onBack }) {
             <div className="flex items-start gap-6">
               {/* Icon */}
               <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-4xl flex-shrink-0">
-                {manifest.icon_cid ? (
+                {manifest?.icon_cid ? (
                   <img
                     src={`https://gateway.pinata.cloud/ipfs/${manifest.icon_cid}`}
-                    alt={manifest.name}
+                    alt={manifest?.name || subgraphApp.name}
                     className="w-full h-full object-cover rounded-2xl"
                   />
                 ) : (
@@ -223,28 +193,26 @@ export default function AppDetail({ slug, wallet, onBack }) {
 
               {/* Info */}
               <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2">{manifest.name}</h1>
-                <p className="text-blue-100 mb-3">{manifest.description}</p>
+                <h1 className="text-3xl font-bold mb-2">{manifest?.name || subgraphApp.name}</h1>
+                <p className="text-blue-100 mb-3">{manifest?.description || 'App descentralizada'}</p>
                 
                 <div className="flex items-center gap-4 text-sm">
                   <span className="bg-white/20 px-3 py-1 rounded-full">
-                    v{manifest.version}
+                    {manifest ? `v${manifest.version}` : 'v1.0'}
                   </span>
-                  <span>📦 {manifest.package}</span>
-                  <span>⬇️ {app.totalDownloads} descargas</span>
+                  {manifest?.package && <span>📦 {manifest.package}</span>}
+                  <span>⬇️ {subgraphApp.totalDownloads} descargas</span>
                 </div>
               </div>
 
-              {/* Price */}
+              {/* Badge On-Chain */}
               <div className="text-right">
-                <div className="text-3xl font-bold">
-                  {isFree ? 'GRATIS' : `${app.priceEth} ETH`}
+                <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                  ⛓️ On-Chain
                 </div>
-                {hasPurchased && (
-                  <div className="mt-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm">
-                    ✓ Comprada
-                  </div>
-                )}
+                <div className="mt-2 text-blue-100 text-sm">
+                  GRATIS
+                </div>
               </div>
             </div>
           </div>
@@ -252,36 +220,22 @@ export default function AppDetail({ slug, wallet, onBack }) {
           {/* Actions */}
           <div className="p-6 border-b">
             <div className="flex gap-4">
-              {canDownload ? (
-                <button
-                  onClick={handleDownload}
-                  disabled={downloading}
-                  className="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-                >
-                  {downloading ? (
-                    <span>📥 Descargando... {downloadProgress}%</span>
-                  ) : (
-                    <span>📥 Descargar APK</span>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handlePurchase}
-                  disabled={purchasing || !wallet?.isConnected}
-                  className="flex-1 bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-                >
-                  {purchasing ? (
-                    <span>⏳ Comprando...</span>
-                  ) : (
-                    <span>💰 Comprar por {app.priceEth} ETH</span>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleDownloadApp}
+                disabled={downloading || !wallet?.isConnected}
+                className="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+              >
+                {downloading ? (
+                  <span>📥 Descargando... {downloadProgress}%</span>
+                ) : (
+                  <span>📥 Descargar APK</span>
+                )}
+              </button>
             </div>
 
-            {!wallet?.isConnected && !isFree && (
-              <p className="text-sm text-red-600 mt-2 text-center">
-                ⚠️ Conecta tu wallet para comprar
+            {!wallet?.isConnected && (
+              <p className="text-sm text-yellow-600 mt-2 text-center">
+                ⚠️ Conecta tu wallet para registrar la descarga en blockchain
               </p>
             )}
 
@@ -308,7 +262,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
           {txHash && (
             <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm text-green-800 mb-2">
-                ✅ ¡Compra exitosa! Ahora puedes descargar la app.
+                ✅ ¡Descarga registrada en blockchain!
               </p>
               <p className="text-xs font-mono text-green-700 break-all">
                 Tx: {txHash}
@@ -325,31 +279,35 @@ export default function AppDetail({ slug, wallet, onBack }) {
               <div className="space-y-3 text-sm">
                 <div>
                   <span className="text-gray-600">Publisher:</span>
-                  <p className="font-medium">{manifest.publisher_name || 'Anónimo'}</p>
-                  <p className="text-xs font-mono text-gray-500">{app.publisher}</p>
+                  <p className="font-medium">{manifest?.publisher_name || 'Anónimo'}</p>
+                  <p className="text-xs font-mono text-gray-500">{subgraphApp.publisher?.address || subgraphApp.publisher?.id}</p>
                 </div>
 
-                <div>
-                  <span className="text-gray-600">Versión:</span>
-                  <p className="font-medium">{manifest.version} (código {manifest.versionCode})</p>
-                </div>
+                {manifest && (
+                  <>
+                    <div>
+                      <span className="text-gray-600">Versión:</span>
+                      <p className="font-medium">{manifest.version} (código {manifest.versionCode})</p>
+                    </div>
 
-                <div>
-                  <span className="text-gray-600">Tamaño:</span>
-                  <p className="font-medium">{(manifest.apk_size / 1024 / 1024).toFixed(2)} MB</p>
-                </div>
+                    <div>
+                      <span className="text-gray-600">Tamaño:</span>
+                      <p className="font-medium">{(manifest.apk_size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
 
-                <div>
-                  <span className="text-gray-600">SDK:</span>
-                  <p className="font-medium">Min: {manifest.min_sdk} | Target: {manifest.target_sdk}</p>
-                </div>
+                    <div>
+                      <span className="text-gray-600">SDK:</span>
+                      <p className="font-medium">Min: {manifest.min_sdk} | Target: {manifest.target_sdk}</p>
+                    </div>
 
-                <div>
-                  <span className="text-gray-600">Licencia:</span>
-                  <p className="font-medium">{manifest.license || 'No especificada'}</p>
-                </div>
+                    <div>
+                      <span className="text-gray-600">Licencia:</span>
+                      <p className="font-medium">{manifest.license || 'No especificada'}</p>
+                    </div>
+                  </>
+                )}
 
-                {manifest.website && (
+                {manifest?.website && (
                   <div>
                     <span className="text-gray-600">Website:</span>
                     <a
@@ -363,7 +321,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
                   </div>
                 )}
 
-                {manifest.source_code && (
+                {manifest?.source_code && (
                   <div>
                     <span className="text-gray-600">Código fuente:</span>
                     <a
@@ -383,7 +341,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
             <div>
               <h3 className="text-lg font-bold mb-4">Permisos</h3>
               
-              {manifest.permissions && manifest.permissions.length > 0 ? (
+              {manifest?.permissions && manifest.permissions.length > 0 ? (
                 <div className="space-y-2">
                   {manifest.permissions.map((permission, index) => (
                     <div
@@ -400,7 +358,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
               )}
 
               {/* Categories */}
-              {manifest.categories && manifest.categories.length > 0 && (
+              {manifest?.categories && manifest.categories.length > 0 && (
                 <div className="mt-6">
                   <h3 className="text-lg font-bold mb-3">Categorías</h3>
                   <div className="flex flex-wrap gap-2">
@@ -419,13 +377,13 @@ export default function AppDetail({ slug, wallet, onBack }) {
           </div>
 
           {/* Version History */}
-          {versions.length > 0 && (
+          {subgraphApp.versions && subgraphApp.versions.length > 0 && (
             <div className="p-6 border-t">
               <h3 className="text-lg font-bold mb-4">Historial de Versiones</h3>
               <div className="space-y-3">
-                {versions.map((version, index) => (
+                {subgraphApp.versions.map((version, index) => (
                   <div
-                    key={index}
+                    key={version.id || index}
                     className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg"
                   >
                     <div>
@@ -437,7 +395,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
                       )}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {version.timestamp.toLocaleDateString()}
+                      {new Date(Number(version.publishedAt) * 1000).toLocaleDateString()}
                     </div>
                   </div>
                 ))}
@@ -451,26 +409,26 @@ export default function AppDetail({ slug, wallet, onBack }) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">Total descargas:</span>
-                <p className="font-medium">{app.totalDownloads}</p>
+                <p className="font-medium">{subgraphApp.totalDownloads}</p>
               </div>
               <div>
-                <span className="text-gray-600">Revenue total:</span>
-                <p className="font-medium">{app.totalRevenue} ETH</p>
+                <span className="text-gray-600">Slug:</span>
+                <p className="font-medium">{subgraphApp.slug}</p>
               </div>
               <div>
                 <span className="text-gray-600">Registrada:</span>
-                <p className="font-medium">{app.createdAt.toLocaleDateString()}</p>
+                <p className="font-medium">{new Date(Number(subgraphApp.createdAt) * 1000).toLocaleDateString()}</p>
               </div>
               <div>
                 <span className="text-gray-600">Estado:</span>
-                <p className="font-medium">{app.active ? '✅ Activa' : '❌ Inactiva'}</p>
+                <p className="font-medium">{subgraphApp.active ? '✅ Activa' : '❌ Inactiva'}</p>
               </div>
             </div>
 
             <div className="mt-4 pt-4 border-t">
               <span className="text-gray-600 text-sm">Manifest CID:</span>
               <p className="font-mono text-xs text-gray-700 break-all mt-1">
-                {app.latestManifestCid}
+                {subgraphApp.latestManifestCid}
               </p>
             </div>
           </div>

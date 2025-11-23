@@ -55,10 +55,7 @@ export async function getAllApps({ first = 100, skip = 0, orderBy = 'createdAt',
           versionCode
           manifestCid
         }
-        priceWei
-        priceEth
         totalDownloads
-        totalRevenue
         active
         createdAt
         updatedAt
@@ -67,7 +64,7 @@ export async function getAllApps({ first = 100, skip = 0, orderBy = 'createdAt',
   `;
 
   const data = await query(queryString, { first, skip, orderBy, orderDirection });
-  return data.apps;
+  return data.apps || [];
 }
 
 /**
@@ -84,7 +81,6 @@ export async function getAppBySlug(slug) {
           id
           address
           totalApps
-          totalRevenue
         }
         latestManifestCid
         latestVersion {
@@ -92,10 +88,7 @@ export async function getAppBySlug(slug) {
           manifestCid
           publishedAt
         }
-        priceWei
-        priceEth
         totalDownloads
-        totalRevenue
         active
         createdAt
         updatedAt
@@ -106,12 +99,11 @@ export async function getAppBySlug(slug) {
           publishedAt
           deprecated
         }
-        purchases(first: 10, orderBy: timestamp, orderDirection: desc) {
+        downloads(first: 10, orderBy: timestamp, orderDirection: desc) {
           id
-          buyer {
+          user {
             address
           }
-          price
           timestamp
         }
       }
@@ -163,17 +155,12 @@ export async function getPublisherApps(publisherAddress) {
         id
         address
         totalApps
-        totalRevenue
-        totalDownloads
         apps(orderBy: createdAt, orderDirection: desc) {
           id
           slug
           name
           latestManifestCid
-          priceWei
-          priceEth
           totalDownloads
-          totalRevenue
           active
           createdAt
           versions {

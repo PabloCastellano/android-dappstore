@@ -1,8 +1,9 @@
-// Registra el service worker en producción y en dev si existe.
+// Registra el service worker solo en producción
 import { Workbox } from 'workbox-window'
 
 export function registerSW() {
-  if ('serviceWorker' in navigator) {
+  // Solo registrar en producción (cuando el build está hecho)
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     // intenta registrar workbox-generated service worker en /sw.js
     const wb = new Workbox('/sw.js')
     wb.addEventListener('installed', (event) => {
@@ -11,6 +12,8 @@ export function registerSW() {
       }
     })
     wb.register().catch(err => console.log('SW register failed:', err))
+  } else if (import.meta.env.DEV) {
+    console.log('ℹ️ Service Worker deshabilitado en desarrollo')
   }
 }
 
