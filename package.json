@@ -16,7 +16,7 @@
     "verify": "node scripts/verify-setup.js",
     "deploy:local": "hardhat ignition deploy ignition/modules/AppStore.ts --network localhost --reset",
     "deploy:sepolia": "hardhat ignition deploy ignition/modules/AppStore.ts --network sepolia",
-    "verify:sepolia": "hardhat ignition verify AppStoreModule --network sepolia",
+    "verify:sepolia": "hardhat ignition verify chain-11155111 --network sepolia",
     "node": "hardhat node --hostname 0.0.0.0",
     "update-subgraph": "node scripts/update-subgraph-address.js",
     "copy-deployments": "node scripts/copy-deployments.js",

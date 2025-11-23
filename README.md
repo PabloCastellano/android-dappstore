@@ -12,7 +12,7 @@ A fully decentralized platform where:
 - ⛓️ On-chain metadata, payments, and download tracking
 - 🔍 Full transparency and traceability
 
-> **Note**: Files stored on IPFS/Filecoin are publicly accessible by design. The blockchain tracks downloads for statistics and traceability, not access control. See [Download Security Model](#-download-security-model) for details.
+> **Note**: Files stored on IPFS are publicly accessible by design. The blockchain tracks downloads for statistics and traceability, not access control. See [Download Security Model](#-download-security-model) for details.
 
 ## ⚡ Quick Start
 
@@ -235,9 +235,11 @@ If you require true access control, consider:
 
 **Current implementation prioritizes**: Simplicity, decentralization, and transparency over strict access control.
 
-## �📋 Documentation
+## 📋 Documentation
 
 - **`IMPLEMENTATION_COMPLETE.md`** - ✅ Complete implementation summary
+- **`SECURE_UPLOAD_MIGRATION.md`** - 🔐 Secure backend upload migration guide
+- **`backend/README.md`** - 🔐 Backend API documentation
 - **`IPFS_IMPLEMENTATION.md`** - ✅ IPFS integration summary
 - **`FRONTEND_INTEGRATION.md`** - ✅ Frontend integration summary
 - **`APP_DETAIL_GUIDE.md`** - 📱 App detail page guide
@@ -283,6 +285,9 @@ If you require true access control, consider:
 - ✅ Complete GraphQL queries
 - ✅ Complete documentation
 - ✅ Download security model documentation
+- ✅ Secure backend API for uploads
+- ✅ Signature-based authentication
+- ✅ Rate limiting and abuse prevention
 
 ### Optional Extras
 - ⏳ Subgraph deployment (manual)

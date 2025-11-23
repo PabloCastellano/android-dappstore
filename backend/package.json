@@ -1,0 +1,30 @@
+{
+  "name": "dappstore-backend",
+  "version": "1.0.0",
+  "description": "Backend API for DApp Store - Secure file uploads to Filecoin",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dappstore",
+    "filecoin",
+    "ipfs",
+    "web3",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@filoz/synapse-sdk": "^0.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.9.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "multer": "^1.4.5-lts.1"
+  }
+}
