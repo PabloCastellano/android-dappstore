@@ -1,6 +1,6 @@
-# 🚀 Decentralized App Store - Ethereum + IPFS
+# 🚀 Decentralized App Store - Ethereum + Filecoin
 
-Decentralized App Store using **Smart Contracts** (Ethereum), **IPFS** for storage, and **React PWA** for the frontend.
+Decentralized App Store using **Smart Contracts** (Ethereum), **Filecoin** for storage (via Synapse SDK), and **React PWA** for the frontend.
 
 ## 🎯 Overview
 
@@ -8,7 +8,7 @@ A fully decentralized platform where:
 - 📱 Developers publish Android apps (APKs)
 - 💰 Direct monetization with crypto (ETH/tokens)
 - 🔒 No censorship or intermediaries
-- 📦 IPFS storage
+- 📦 Filecoin decentralized storage
 - ⛓️ On-chain metadata and payments
 - 🔍 Full transparency
 
@@ -43,10 +43,10 @@ See `QUICK_START.md` for detailed instructions.
 Included features:
 - React + Vite
 - Tailwind CSS
+- Filecoin storage via Synapse SDK
 - PWA manifest + service worker (Workbox)
-- Example `sw.js` file with IPFS caching
 - Service worker registration in `serviceWorkerRegistration.js`
-- Mock UI and usage of uploaded mockup image
+- Modern decentralized storage
 
 ## Smart Contracts
 
@@ -114,15 +114,15 @@ See `/contracts/README.md` for complete documentation.
 ┌─────────────────────────────────────────────────────────────┐
 │                      FRONTEND (React PWA)                    │
 │  - UI for discovering and purchasing apps                   │
-│  - MetaMask/WalletConnect integration                       │
-│  - Service Worker for IPFS caching                          │
-└─────────────────┬───────────────────────────────────────────┘
+│  - MetaMask wallet integration                              │
+│  - Synapse SDK for Filecoin storage                         │
+└─────────────────┬────────────────────────────────────────────┘
                   │
                   ├─── ethers.js ───┐
                   │                  │
-                  ├─── IPFS ────────┤
+                  ├─── Synapse SDK ───┤
                   │                  │
-┌─────────────────▼──────────┐      │
+┌─────────────────┴──────────┐      │
 │   SMART CONTRACTS (L2)     │      │
 │  - AppStore.sol            │◄─────┘
 │  - AppStoreERC20.sol       │
@@ -132,7 +132,7 @@ See `/contracts/README.md` for complete documentation.
 └─────────────┬──────────────┘
               │
               │ Events
-              ▼
+              ┴
 ┌─────────────────────────┐
 │   THE GRAPH (Indexer)   │
 │  - Subgraph             │
@@ -141,21 +141,22 @@ See `/contracts/README.md` for complete documentation.
 └─────────────────────────┘
 
 ┌─────────────────────────┐
-│   IPFS / Arweave        │
+│   FILECOIN NETWORK      │
 │  - APK files            │
 │  - Manifests (JSON)     │
-│  - Icons & screenshots  │
+│  - Decentralized CDN    │
+│  - Warm Storage         │
 └─────────────────────────┘
 ```
 
 ## 📋 Documentation
 
 - **`IMPLEMENTATION_COMPLETE.md`** - ✅ Complete implementation summary
-- **`IPFS_IMPLEMENTATION.md`** - ✅ IPFS integration summary
+- **`FILECOIN_GUIDE.md`** - 📦 Filecoin storage integration guide
+- **`TROUBLESHOOTING.md`** - 🔧 Common issues and solutions
 - **`FRONTEND_INTEGRATION.md`** - ✅ Frontend integration summary
 - **`APP_DETAIL_GUIDE.md`** - 📱 App detail page guide
 - **`QUICK_START.md`** - 🚀 Quick start guide
-- **`IPFS_GUIDE.md`** - 📦 Complete IPFS guide
 - **`ACCESSING_UI.md`** - 🎨 How to access the UI
 - **`DEPLOYMENT_GUIDE.md`** - 🚀 Deployment guide
 - **`CONTRACTS_SUMMARY.md`** - 📊 Technical contracts documentation
@@ -169,7 +170,7 @@ See `/contracts/README.md` for complete documentation.
 - ✅ Smart contracts implemented and compiled
 - ✅ Basic contract tests written
 - ✅ Deployment scripts configured
-- ✅ Complete IPFS integration (Pinata)
+- ✅ Complete Filecoin integration (Synapse SDK)
 - ✅ APK upload/download service
 - ✅ Manifest system with EIP-712 signing
 - ✅ APKUploader component with wizard

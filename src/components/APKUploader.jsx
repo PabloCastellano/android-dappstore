@@ -1,14 +1,16 @@
 /**
- * Componente para subir APKs a IPFS y generar manifests
+ * Component for uploading APKs to Filecoin and generating manifests
  */
 
 import React, { useState } from 'react';
-import { uploadToPinata, uploadJSONToPinata, calculateSHA256 } from '../services/ipfs.js';
+import { useSynapse } from '../hooks/useSynapse';
 import { createManifest, validateManifest, signManifest, extractAPKInfo, formatFileSize, generateSlug } from '../utils/manifest.js';
+import { getExplorerUrl } from '../utils/network';
 
 export default function APKUploader({ onComplete, wallet }) {
+  const { uploadFile, uploadJSON, calculateHash, isInitialized, chainId, isCorrectNetwork, switchNetwork, balance, setupPayments } = useSynapse();
   
-  const [step, setStep] = useState(1); // 1: Upload APK, 2: Metadata, 3: Review, 4: Upload to IPFS
+  const [step, setStep] = useState(1); // 1: Upload APK, 2: Metadata, 3: Review, 4: Upload to Filecoin
   const [apkFile, setApkFile] = useState(null);
   const [iconFile, setIconFile] = useState(null);
   const [apkInfo, setApkInfo] = useState(null);
@@ -33,7 +35,7 @@ export default function APKUploader({ onComplete, wallet }) {
   });
 
   const [manifest, setManifest] = useState(null);
-  const [manifestCID, setManifestCID] = useState(null);
+  const [manifestPieceCid, setManifestPieceCid] = useState(null);
 
   // Manejar selección de APK
   const handleAPKSelect = async (e) => {
@@ -125,10 +127,24 @@ export default function APKUploader({ onComplete, wallet }) {
     setStep(3);
   };
 
-  // Paso 3 -> 4: Subir a IPFS
-  const handleUploadToIPFS = async () => {
+  // Step 3 -> 4: Upload to Filecoin
+  const handleUploadToFilecoin = async () => {
     if (!wallet.isConnected) {
-      setError('Wallet no conectada');
+      setError('Wallet not connected');
+      return;
+    }
+
+    if (!isInitialized) {
+      setError('Filecoin storage not initialized. Please wait...');
+      return;
+    }
+
+    // Check if payments are set up
+    if (!balance || balance.formatted === '0' || balance.formatted === '0.0') {
+      setError(
+        'No USDFC balance detected. You need to deposit USDFC tokens for storage payments. ' +
+        'Click "Setup Payments" below to deposit 2.5 USDFC (covers ~1TB for 30 days).'
+      );
       return;
     }
 
@@ -137,13 +153,13 @@ export default function APKUploader({ onComplete, wallet }) {
     setUploadProgress(0);
 
     try {
-      // 1. Subir APK a IPFS
+      // 1. Upload APK to Filecoin
       setUploadProgress(10);
-      console.log('📤 Uploading APK to IPFS...');
+      console.log('📤 Uploading APK to Filecoin...');
       
-      const apkResult = await uploadToPinata(apkFile, {
-        name: `${formData.slug}-${formData.version}.apk`,
-        keyvalues: {
+      const apkResult = await uploadFile(apkFile, {
+        metadata: {
+          name: `${formData.slug}-${formData.version}.apk`,
           type: 'apk',
           slug: formData.slug,
           version: formData.version
@@ -152,32 +168,32 @@ export default function APKUploader({ onComplete, wallet }) {
 
       setUploadProgress(40);
 
-      // 2. Subir icono a IPFS (si existe)
-      let iconCID = '';
+      // 2. Upload icon to Filecoin (if exists)
+      let iconPieceCid = '';
       if (iconFile) {
-        console.log('📤 Uploading icon to IPFS...');
-        const iconResult = await uploadToPinata(iconFile, {
-          name: `${formData.slug}-icon.png`,
-          keyvalues: {
+        console.log('📤 Uploading icon to Filecoin...');
+        const iconResult = await uploadFile(iconFile, {
+          metadata: {
+            name: `${formData.slug}-icon.png`,
             type: 'icon',
             slug: formData.slug
           }
         });
-        iconCID = iconResult.cid;
+        iconPieceCid = iconResult.pieceCid;
       }
 
       setUploadProgress(60);
 
-      // 3. Crear manifest
+      // 3. Create manifest
       console.log('📝 Creating manifest...');
       const manifestData = createManifest(
         {
           ...formData,
           publisher: wallet.address,
-          icon_cid: iconCID
+          icon_cid: iconPieceCid
         },
         {
-          cid: apkResult.cid,
+          cid: apkResult.pieceCid,
           sha256: apkInfo.sha256,
           size: apkFile.size
         }
@@ -185,52 +201,50 @@ export default function APKUploader({ onComplete, wallet }) {
 
       setUploadProgress(70);
 
-      // 4. Firmar manifest
+      // 4. Sign manifest
       console.log('✍️ Signing manifest...');
       const signature = await signManifest(manifestData, wallet.signer, wallet.chainId);
       manifestData.signature = signature;
 
       setUploadProgress(80);
 
-      // 5. Validar manifest
+      // 5. Validate manifest
       const validation = validateManifest(manifestData);
       if (!validation.valid) {
-        throw new Error(`Manifest inválido: ${validation.errors.join(', ')}`);
+        throw new Error(`Invalid manifest: ${validation.errors.join(', ')}`);
       }
 
       setUploadProgress(90);
 
-      // 6. Subir manifest a IPFS
-      console.log('📤 Uploading manifest to IPFS...');
-      const manifestResult = await uploadJSONToPinata(manifestData, {
+      // 6. Upload manifest to Filecoin
+      console.log('📤 Uploading manifest to Filecoin...');
+      const manifestResult = await uploadJSON(manifestData, {
         name: `${formData.slug}-manifest.json`,
-        keyvalues: {
-          type: 'manifest',
-          slug: formData.slug,
-          version: formData.version
-        }
+        type: 'manifest',
+        slug: formData.slug,
+        version: formData.version
       });
 
       setUploadProgress(100);
 
       console.log('✅ Upload complete!');
       setManifest(manifestData);
-      setManifestCID(manifestResult.cid);
+      setManifestPieceCid(manifestResult.pieceCid);
       setStep(4);
 
-      // Callback con los resultados
+      // Callback with results
       if (onComplete) {
         onComplete({
           manifest: manifestData,
-          manifestCID: manifestResult.cid,
-          apkCID: apkResult.cid,
-          iconCID
+          manifestCID: manifestResult.pieceCid,
+          apkCID: apkResult.pieceCid,
+          iconCID: iconPieceCid
         });
       }
 
     } catch (err) {
       console.error('❌ Upload error:', err);
-      setError(err.message || 'Error al subir archivos a IPFS');
+      setError(err.message || 'Error uploading files to Filecoin');
     } finally {
       setUploading(false);
     }
@@ -343,7 +357,8 @@ export default function APKUploader({ onComplete, wallet }) {
                   name="slug"
                   value={formData.slug}
                   onChange={handleChange}
-                  pattern="[a-z0-9-]+"
+                  pattern="[a-z0-9\-]+"
+                  title="Only lowercase letters, numbers, and hyphens allowed"
                   className="w-full px-4 py-2 border rounded-lg"
                   required
                 />
@@ -452,10 +467,103 @@ export default function APKUploader({ onComplete, wallet }) {
               </div>
             </div>
 
+            {/* Network Warning */}
+            {!isCorrectNetwork && wallet?.isConnected && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">🚫</div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-900 mb-2">Wrong Network</h3>
+                    <p className="text-sm text-red-800 mb-3">
+                      Filecoin storage requires connection to <strong>Filecoin Calibration testnet</strong> (chain ID 314159).
+                      Current network: {chainId ? `Chain ID ${chainId}` : 'Unknown'}
+                    </p>
+                    <button
+                      onClick={() => switchNetwork('calibration')}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700"
+                    >
+                      Switch to Filecoin Calibration
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payment Warning */}
+            {isCorrectNetwork && wallet?.isConnected && (!balance || balance.formatted === '0' || balance.formatted === '0.0') && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">💰</div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-orange-900 mb-2">Payment Setup Required</h3>
+                    <p className="text-sm text-orange-800 mb-3">
+                      You need USDFC tokens to pay for Filecoin storage. Current balance: <strong>{balance?.formatted || '0'} USDFC</strong>
+                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-orange-700">
+                        Get test USDFC tokens from: <a href="https://forest-explorer.chainsafe.dev/faucet/calibnet_usdfc" target="_blank" rel="noopener noreferrer" className="underline">Filecoin Faucet</a>
+                        {wallet?.address && chainId && (
+                          <>
+                            {' • '}
+                            <a 
+                              href={getExplorerUrl(chainId, wallet.address, 'address')}
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="underline"
+                            >
+                              View wallet in explorer
+                            </a>
+                          </>
+                        )}
+                      </p>
+                      <button
+                        onClick={async () => {
+                          try {
+                            setUploading(true);
+                            await setupPayments("2.5");
+                            alert('✅ Payment setup successful! You can now upload files.');
+                          } catch (err) {
+                            setError('Payment setup failed: ' + err.message);
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                        disabled={uploading}
+                        className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 disabled:bg-gray-400"
+                      >
+                        {uploading ? 'Setting up...' : 'Setup Payments (Deposit 2.5 USDFC)'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Balance Info */}
+            {isCorrectNetwork && balance && parseFloat(balance.formatted) > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-green-800">
+                    ✅ <strong>Payment Ready:</strong> {balance.formatted} USDFC available for storage
+                  </p>
+                  {wallet?.address && chainId && (
+                    <a 
+                      href={getExplorerUrl(chainId, wallet.address, 'address')}
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-xs text-green-700 hover:text-green-900 underline ml-2 whitespace-nowrap"
+                    >
+                      View in explorer ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
-                ⚠️ Los archivos se subirán a IPFS (Pinata) y se generará un manifest firmado.
-                Este proceso puede tardar varios minutos dependiendo del tamaño del APK.
+                ⚠️ Files will be uploaded to Filecoin and a signed manifest will be generated.
+                This process may take several minutes depending on APK size.
               </p>
             </div>
 
@@ -467,11 +575,11 @@ export default function APKUploader({ onComplete, wallet }) {
                 ← Atrás
               </button>
               <button
-                onClick={handleUploadToIPFS}
-                disabled={uploading}
+                onClick={handleUploadToFilecoin}
+                disabled={uploading || !isInitialized || !isCorrectNetwork}
                 className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400"
               >
-                {uploading ? 'Subiendo...' : 'Subir a IPFS →'}
+                {uploading ? 'Uploading...' : !isCorrectNetwork ? 'Wrong Network' : !isInitialized ? 'Initializing...' : 'Upload to Filecoin →'}
               </button>
             </div>
           </div>
@@ -481,22 +589,22 @@ export default function APKUploader({ onComplete, wallet }) {
         {step === 4 && (
           <div className="space-y-6 text-center">
             <div className="text-6xl mb-4">✅</div>
-            <h2 className="text-2xl font-bold">¡Upload Completo!</h2>
+            <h2 className="text-2xl font-bold">Upload Complete!</h2>
             
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-left">
-              <h3 className="font-semibold mb-4">Información del Manifest:</h3>
+              <h3 className="font-semibold mb-4">Manifest Information:</h3>
               <div className="space-y-2 text-sm">
                 <div>
-                  <strong>Manifest CID:</strong>
-                  <p className="font-mono break-all">{manifestCID}</p>
+                  <strong>Manifest Piece CID:</strong>
+                  <p className="font-mono break-all">{manifestPieceCid}</p>
                 </div>
                 <div>
-                  <strong>APK CID:</strong>
+                  <strong>APK Piece CID:</strong>
                   <p className="font-mono break-all">{manifest?.apk_cid}</p>
                 </div>
                 {manifest?.icon_cid && (
                   <div>
-                    <strong>Icon CID:</strong>
+                    <strong>Icon Piece CID:</strong>
                     <p className="font-mono break-all">{manifest.icon_cid}</p>
                   </div>
                 )}
@@ -505,7 +613,7 @@ export default function APKUploader({ onComplete, wallet }) {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 Usa el <strong>Manifest CID</strong> para registrar la app en el smart contract.
+                💡 Use the <strong>Manifest Piece CID</strong> to register the app in the smart contract.
               </p>
             </div>
 
@@ -515,11 +623,11 @@ export default function APKUploader({ onComplete, wallet }) {
                 setApkFile(null);
                 setIconFile(null);
                 setManifest(null);
-                setManifestCID(null);
+                setManifestPieceCid(null);
               }}
               className="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700"
             >
-              Subir Otra App
+              Upload Another App
             </button>
           </div>
         )}
@@ -535,11 +643,11 @@ export default function APKUploader({ onComplete, wallet }) {
             </div>
             <p className="text-center text-sm text-gray-600 mt-2">
               {uploadProgress}% - {
-                uploadProgress < 40 ? 'Subiendo APK...' :
-                uploadProgress < 60 ? 'Subiendo icono...' :
-                uploadProgress < 80 ? 'Creando manifest...' :
-                uploadProgress < 100 ? 'Subiendo manifest...' :
-                '¡Completo!'
+                uploadProgress < 40 ? 'Uploading APK...' :
+                uploadProgress < 60 ? 'Uploading icon...' :
+                uploadProgress < 80 ? 'Creating manifest...' :
+                uploadProgress < 100 ? 'Uploading manifest...' :
+                'Complete!'
               }
             </p>
           </div>

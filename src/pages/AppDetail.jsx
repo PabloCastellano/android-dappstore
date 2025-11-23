@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../hooks/useSubgraph';
 import { useAppStore } from '../hooks/useAppStore';
-import { downloadFromIPFS, downloadJSONFromIPFS, verifyFileIntegrity } from '../services/ipfs';
+import { useSynapse } from '../hooks/useSynapse';
 
 export default function AppDetail({ slug, wallet, onBack }) {
   // Subgraph hook to get app data
@@ -14,6 +14,9 @@ export default function AppDetail({ slug, wallet, onBack }) {
   
   // Contract hook for interactions (downloads, etc)
   const { downloadApp } = useAppStore(wallet);
+  
+  // Synapse hook for Filecoin storage
+  const { downloadFile, downloadJSON, verifyIntegrity } = useSynapse();
   
   const [manifest, setManifest] = useState(null);
   const [downloading, setDownloading] = useState(false);
@@ -30,8 +33,8 @@ export default function AppDetail({ slug, wallet, onBack }) {
 
   const loadManifest = async () => {
     try {
-      console.log('📦 Loading manifest from IPFS:', subgraphApp.latestManifestCid);
-      const manifestData = await downloadJSONFromIPFS(subgraphApp.latestManifestCid);
+      console.log('📦 Loading manifest from Filecoin:', subgraphApp.latestManifestCid);
+      const manifestData = await downloadJSON(subgraphApp.latestManifestCid);
       console.log('✅ Manifest loaded:', manifestData);
       setManifest(manifestData);
     } catch (err) {
@@ -68,7 +71,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
     }
   };
 
-  // Download APK from IPFS
+  // Download APK from Filecoin
   const handleDownloadAPK = async () => {
     if (!manifest) {
       setError('Manifest not loaded');
@@ -80,11 +83,12 @@ export default function AppDetail({ slug, wallet, onBack }) {
     setError(null);
 
     try {
-      console.log('📥 Downloading APK from IPFS:', manifest.apk_cid);
+      console.log('📥 Downloading APK from Filecoin:', manifest.apk_cid);
 
       // 1. Download APK
       setDownloadProgress(20);
-      const apkBlob = await downloadFromIPFS(manifest.apk_cid);
+      const apkData = await downloadFile(manifest.apk_cid);
+      const apkBlob = new Blob([apkData], { type: 'application/vnd.android.package-archive' });
       
       setDownloadProgress(60);
       console.log('✅ APK downloaded, size:', apkBlob.size);
@@ -92,7 +96,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
       // 2. Verify integrity
       if (manifest.apk_sha256) {
         console.log('🔍 Verifying integrity...');
-        const isValid = await verifyFileIntegrity(apkBlob, manifest.apk_sha256);
+        const isValid = await verifyIntegrity(apkBlob, manifest.apk_sha256);
         
         setDownloadProgress(80);
 
@@ -174,15 +178,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
             <div className="flex items-start gap-6">
               {/* Icon */}
               <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-4xl flex-shrink-0">
-                {manifest?.icon_cid ? (
-                  <img
-                    src={`https://gateway.pinata.cloud/ipfs/${manifest.icon_cid}`}
-                    alt={manifest?.name || subgraphApp.name}
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
-                ) : (
-                  '📱'
-                )}
+                {'📱'}
               </div>
 
               {/* Info */}

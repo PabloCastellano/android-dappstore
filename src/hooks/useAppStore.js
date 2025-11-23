@@ -31,26 +31,46 @@ export function useAppStore(wallet) {
   // Load contract address from Ignition deployments
   useEffect(() => {
     const loadContractAddress = async () => {
+      const chainId = wallet?.chainId || 31337;
+      
+      // Only try to load Ignition deployments for local development (chain 31337)
+      if (chainId !== 31337) {
+        console.log('ℹ️ Not on localhost - skipping Ignition deployment lookup');
+        return;
+      }
+      
       try {
         // Try to load from Ignition deployment (localhost = chain 31337)
-        const chainId = wallet?.chainId || 31337;
         const response = await fetch(`/ignition/deployments/chain-${chainId}/deployed_addresses.json`);
         
-        if (response.ok) {
-          const addresses = await response.json();
-          // Ignition uses the format: "ModuleName#ContractName"
-          const address = addresses['AppStoreModule#AppStore'];
-          if (address) {
-            setContractAddress(address);
-            console.log('✅ Contract address loaded from Ignition:', address);
-            return;
-          }
+        if (!response.ok) {
+          console.warn('⚠️ Ignition deployment file not found. Deploy contracts first with: npm run deploy:local');
+          return;
+        }
+        
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          console.warn('⚠️ Ignition deployment file is empty');
+          return;
+        }
+        
+        const addresses = JSON.parse(text);
+        // Ignition uses the format: "ModuleName#ContractName"
+        const address = addresses['AppStoreModule#AppStore'];
+        if (address) {
+          setContractAddress(address);
+          console.log('✅ Contract address loaded from Ignition:', address);
+        } else {
+          console.warn('⚠️ AppStore contract not found in Ignition deployments');
         }
       } catch (err) {
-        console.warn('⚠️ Could not load from Ignition deployments:', err.message);
+        // Only show warning if it's a real error, not just missing file
+        if (err instanceof SyntaxError) {
+          console.warn('⚠️ Could not parse Ignition deployment file:', err.message);
+        } else if (!err.message.includes('Failed to fetch')) {
+          console.warn('⚠️ Could not load from Ignition deployments:', err.message);
+        }
       }
-
-      console.error('⚠️  Deploy contracts first with: npm run deploy:local');
     };
 
     loadContractAddress();
