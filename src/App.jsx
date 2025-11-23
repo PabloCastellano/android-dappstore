@@ -53,7 +53,7 @@ export default function App() {
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                📤 Publicar
+                📤 Publish
               </button>
               
               <button
@@ -64,7 +64,7 @@ export default function App() {
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                📱 Mis Apps
+                📱 My Apps
               </button>
               
               <button
@@ -93,7 +93,7 @@ export default function App() {
                     onClick={wallet.disconnect}
                     className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium transition text-sm"
                   >
-                    Desconectar
+                    Disconnect
                   </button>
                 </div>
               ) : (
@@ -102,7 +102,7 @@ export default function App() {
                   disabled={wallet.isConnecting}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {wallet.isConnecting ? '🔄 Conectando...' : '🔗 Connect Wallet'}
+                  {wallet.isConnecting ? '🔄 Connecting...' : '🔗 Connect Wallet'}
                 </button>
               )}
             </nav>
@@ -123,7 +123,7 @@ export default function App() {
               </span>
               {wallet.chainId !== 31337 && wallet.chainId !== 11155111 && (
                 <span className="text-yellow-600 text-xs">
-                  ⚠️ Considera usar Sepolia o Hardhat local
+                  ⚠️ Consider using Sepolia or local Hardhat
                 </span>
               )}
             </div>

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Script de inicialización para desarrollo local
- * 1. Despliega el contrato AppStore en localhost
- * 2. Actualiza automáticamente la dirección en todos los archivos necesarios
+ * Initialization script for local development
+ * 1. Deploys the AppStore contract to localhost
+ * 2. Automatically updates the address in all necessary files
  */
 
 import { execSync } from 'child_process';
@@ -15,27 +15,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
 
-console.log('🚀 Iniciando despliegue local...\n');
+console.log('🚀 Starting local deployment...\n');
 
-// Paso 1: Desplegar contrato con Hardhat Ignition
-console.log('📝 Step 1: Desplegando contrato con Hardhat Ignition...');
+// Step 1: Deploy contract with Hardhat Ignition
+console.log('📝 Step 1: Deploying contract with Hardhat Ignition...');
 try {
   execSync('npx hardhat ignition deploy ignition/modules/AppStore.ts --network localhost --reset', {
     cwd: rootDir,
     stdio: 'inherit'
   });
-  console.log('✅ Contrato desplegado\n');
+  console.log('✅ Contract deployed\n');
 } catch (error) {
-  console.error('❌ Error desplegando contrato:', error.message);
+  console.error('❌ Error deploying contract:', error.message);
   process.exit(1);
 }
 
-// Paso 2: Leer dirección desplegada
-console.log('📝 Step 2: Leyendo dirección del contrato...');
+// Step 2: Read deployed address
+console.log('📝 Step 2: Reading contract address...');
 const deploymentPath = path.join(rootDir, 'ignition/deployments/chain-31337/deployed_addresses.json');
 
 if (!fs.existsSync(deploymentPath)) {
-  console.error('❌ No se encontró el archivo de deployment');
+  console.error('❌ Deployment file not found');
   process.exit(1);
 }
 
@@ -43,39 +43,39 @@ const deployment = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
 const contractAddress = deployment['AppStoreModule#AppStore'];
 
 if (!contractAddress) {
-  console.error('❌ No se encontró la dirección del contrato en el deployment');
+  console.error('❌ Contract address not found in deployment');
   process.exit(1);
 }
 
-console.log('✅ Dirección del contrato:', contractAddress);
+console.log('✅ Contract address:', contractAddress);
 console.log('');
 
-// Paso 3: Actualizar public/ignition (para el frontend)
-console.log('📝 Step 3: Actualizando dirección en frontend...');
+// Step 3: Update public/ignition (for the frontend)
+console.log('📝 Step 3: Updating address in frontend...');
 const publicDeploymentDir = path.join(rootDir, 'public/ignition/deployments/chain-31337');
 const publicDeploymentPath = path.join(publicDeploymentDir, 'deployed_addresses.json');
 
-// Crear directorio si no existe
+// Create directory if it doesn't exist
 if (!fs.existsSync(publicDeploymentDir)) {
   fs.mkdirSync(publicDeploymentDir, { recursive: true });
 }
 
-// Escribir dirección
+// Write address
 fs.writeFileSync(publicDeploymentPath, JSON.stringify({
   'AppStoreModule#AppStore': contractAddress
 }, null, 2));
 
-console.log('✅ Frontend actualizado:', publicDeploymentPath);
+console.log('✅ Frontend updated:', publicDeploymentPath);
 console.log('');
 
-// Paso 4: Actualizar subgraph.yaml
-console.log('📝 Step 4: Actualizando dirección en subgraph...');
+// Step 4: Update subgraph.yaml
+console.log('📝 Step 4: Updating address in subgraph...');
 const subgraphPath = path.join(rootDir, 'subgraph/subgraph.yaml');
 
 if (fs.existsSync(subgraphPath)) {
   let subgraphContent = fs.readFileSync(subgraphPath, 'utf8');
   
-  // Buscar y reemplazar la dirección del contrato
+  // Find and replace the contract address
   const addressRegex = /address:\s*"0x[a-fA-F0-9]{40}"/;
   const match = subgraphContent.match(addressRegex);
   
@@ -87,20 +87,20 @@ if (fs.existsSync(subgraphPath)) {
     );
     
     fs.writeFileSync(subgraphPath, subgraphContent);
-    console.log('✅ Subgraph actualizado:');
-    console.log(`   Anterior: ${oldAddress}`);
-    console.log(`   Nueva:    ${contractAddress}`);
+    console.log('✅ Subgraph updated:');
+    console.log(`   Previous: ${oldAddress}`);
+    console.log(`   New:      ${contractAddress}`);
   } else {
-    console.log('⚠️  No se encontró dirección en subgraph.yaml');
+    console.log('⚠️  Address not found in subgraph.yaml');
   }
 } else {
-  console.log('⚠️  No se encontró subgraph/subgraph.yaml');
+  console.log('⚠️  subgraph/subgraph.yaml not found');
 }
 
 console.log('');
 
-// Paso 5: Copiar ABI actualizado
-console.log('📝 Step 5: Copiando ABI actualizado...');
+// Step 5: Copy updated ABI
+console.log('📝 Step 5: Copying updated ABI...');
 const artifactPath = path.join(rootDir, 'artifacts/contracts/AppStore.sol/AppStore.json');
 const subgraphAbiDir = path.join(rootDir, 'subgraph/abis');
 
@@ -111,29 +111,29 @@ if (fs.existsSync(artifactPath)) {
   
   const subgraphAbiPath = path.join(subgraphAbiDir, 'AppStore.json');
   fs.copyFileSync(artifactPath, subgraphAbiPath);
-  console.log('✅ ABI copiado a subgraph/abis/');
+  console.log('✅ ABI copied to subgraph/abis/');
 } else {
-  console.log('⚠️  No se encontró el artifact del contrato');
+  console.log('⚠️  Contract artifact not found');
 }
 
 console.log('');
 
-// Resumen
+// Summary
 console.log('='.repeat(60));
-console.log('✨ INICIALIZACIÓN COMPLETADA EXITOSAMENTE ✨');
+console.log('✨ INITIALIZATION COMPLETED SUCCESSFULLY ✨');
 console.log('='.repeat(60));
 console.log('');
-console.log('📋 Resumen:');
-console.log(`   Contrato:  ${contractAddress}`);
-console.log(`   Red:       localhost (chain ID: 31337)`);
+console.log('📋 Summary:');
+console.log(`   Contract:  ${contractAddress}`);
+console.log(`   Network:   localhost (chain ID: 31337)`);
 console.log('');
-console.log('📂 Archivos actualizados:');
+console.log('📂 Updated files:');
 console.log('   ✅ ignition/deployments/chain-31337/deployed_addresses.json');
 console.log('   ✅ public/ignition/deployments/chain-31337/deployed_addresses.json');
 console.log('   ✅ subgraph/subgraph.yaml');
 console.log('   ✅ subgraph/abis/AppStore.json');
 console.log('');
-console.log('🎯 Próximos pasos:');
+console.log('🎯 Next steps:');
 console.log('   1. Frontend: npm run dev');
 console.log('   2. Subgraph: cd subgraph && graph codegen && graph build');
 console.log('');

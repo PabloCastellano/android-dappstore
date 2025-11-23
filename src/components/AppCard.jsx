@@ -15,7 +15,7 @@ export default function AppCard({ app }) {
         <div className="flex items-center gap-2">
           <div className="font-semibold">{app.name}</div>
           {app.onChain && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800" title="Registrada en blockchain">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800" title="Registered on blockchain">
               ⛓️ On-Chain
             </span>
           )}
@@ -23,7 +23,7 @@ export default function AppCard({ app }) {
         <div className="text-sm text-gray-500">{app.price}</div>
         {app.totalDownloads !== undefined && app.totalDownloads > 0 && (
           <div className="text-xs text-gray-400 mt-1">
-            📥 {app.totalDownloads} descargas
+            📥 {app.totalDownloads} downloads
           </div>
         )}
       </div>

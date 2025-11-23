@@ -1,12 +1,12 @@
 /**
- * Hook para interactuar con el contrato AppStore
- * Versión funcional - reemplaza useAppStore.example.js
+ * Hook to interact with the AppStore contract
+ * Functional version - replaces useAppStore.example.js
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 
-// ABI del contrato AppStore (solo las funciones que usamos)
+// AppStore contract ABI (only the functions we use)
 const APP_STORE_ABI = [
   "function registerApp(string calldata slug, string calldata manifestCid, uint256 versionCode) external",
   "function publishVersion(string calldata slug, string calldata manifestCid, uint256 versionCode) external",
@@ -28,17 +28,17 @@ export function useAppStore(wallet) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar dirección del contrato desde Ignition deployments
+  // Load contract address from Ignition deployments
   useEffect(() => {
     const loadContractAddress = async () => {
       try {
-        // Intentar cargar desde Ignition deployment (localhost = chain 31337)
+        // Try to load from Ignition deployment (localhost = chain 31337)
         const chainId = wallet?.chainId || 31337;
         const response = await fetch(`/ignition/deployments/chain-${chainId}/deployed_addresses.json`);
         
         if (response.ok) {
           const addresses = await response.json();
-          // Ignition usa el formato: "ModuleName#ContractName"
+          // Ignition uses the format: "ModuleName#ContractName"
           const address = addresses['AppStoreModule#AppStore'];
           if (address) {
             setContractAddress(address);
@@ -56,7 +56,7 @@ export function useAppStore(wallet) {
     loadContractAddress();
   }, [wallet?.chainId]);
 
-  // Crear instancia del contrato cuando hay wallet y address
+  // Create contract instance when wallet and address are available
   useEffect(() => {
     if (wallet?.signer && contractAddress) {
       try {

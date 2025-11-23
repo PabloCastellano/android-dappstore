@@ -3,8 +3,8 @@ import AppCard from '../components/AppCard'
 import { useAppStore } from '../hooks/useAppStore'
 import { useAllApps } from '../hooks/useSubgraph'
 
-// Apps de ejemplo - se enriquecerán con datos del contrato si existen
-// Nota: Todas las apps son gratuitas porque el contrato simplificado no maneja precios
+// Example apps - will be enriched with contract data if they exist
+// Note: All apps are free because the simplified contract doesn't handle prices
 const MOCK_APPS = [
   { slug: 'dicegame', name: 'DiceGame', price: 'Free', icon: '/mockup-assets/dice.png', category: 'games', description: 'Fun dice rolling game' },
   { slug: 'chatty', name: 'Chatty', price: 'Free', icon: '/mockup-assets/chatty.png', category: 'social', description: 'Decentralized messaging' },
@@ -17,19 +17,19 @@ const MOCK_APPS = [
 ]
 
 const CATEGORIES = [
-  { id: 'all', name: 'Todas', icon: '📱' },
-  { id: 'games', name: 'Juegos', icon: '🎮' },
+  { id: 'all', name: 'All', icon: '📱' },
+  { id: 'games', name: 'Games', icon: '🎮' },
   { id: 'social', name: 'Social', icon: '💬' },
-  { id: 'productivity', name: 'Productividad', icon: '📊' },
-  { id: 'entertainment', name: 'Entretenimiento', icon: '🎬' },
-  { id: 'finance', name: 'Finanzas', icon: '💰' },
-  { id: 'tools', name: 'Herramientas', icon: '🔧' }
+  { id: 'productivity', name: 'Productivity', icon: '📊' },
+  { id: 'entertainment', name: 'Entertainment', icon: '🎬' },
+  { id: 'finance', name: 'Finance', icon: '💰' },
+  { id: 'tools', name: 'Tools', icon: '🔧' }
 ]
 
 const PRICE_FILTERS = [
-  { id: 'all', name: 'Todos' },
-  { id: 'free', name: 'Gratis' },
-  { id: 'paid', name: 'De pago' }
+  { id: 'all', name: 'All' },
+  { id: 'free', name: 'Free' },
+  { id: 'paid', name: 'Paid' }
 ]
 
 export default function Home({ wallet, onAppClick }) {
@@ -38,27 +38,27 @@ export default function Home({ wallet, onAppClick }) {
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('all')
   const [sortBy, setSortBy] = useState('popular') // 'popular', 'name', 'price'
 
-  // Hook del subgraph - obtiene apps desde el subgraph indexado
+  // Subgraph hook - fetches apps from the indexed subgraph
   const { apps: subgraphApps, loading: subgraphLoading, error: subgraphError, refetch } = useAllApps({
     orderBy: 'createdAt',
     orderDirection: 'desc'
   })
 
-  // Combinar apps del subgraph con mocks
+  // Combine subgraph apps with mocks
   const apps = useMemo(() => {
     const allApps = [...MOCK_APPS]
     
     if (subgraphApps && subgraphApps.length > 0) {
-      console.log(`✅ ${subgraphApps.length} apps cargadas desde el subgraph`)
+      console.log(`✅ ${subgraphApps.length} apps loaded from subgraph`)
       
-      // Mapear apps del subgraph al formato del UI
+      // Map subgraph apps to UI format
       const onChainApps = subgraphApps.map(app => ({
         slug: app.slug,
         name: app.name || app.slug,
         price: 'Free',
         icon: `/mockup-assets/${app.slug}.png`,
         category: 'apps',
-        description: `App descentralizada: ${app.slug}`,
+        description: `Decentralized app: ${app.slug}`,
         publisher: app.publisher?.address,
         latestManifestCid: app.latestManifestCid,
         totalDownloads: app.totalDownloads || 0,
@@ -67,39 +67,39 @@ export default function Home({ wallet, onAppClick }) {
         onChain: true
       }))
       
-      // Fusionar: si una app mock existe on-chain, reemplazarla con datos reales
-      // Si no, agregar las apps on-chain al final
+      // Merge: if a mock app exists on-chain, replace it with real data
+      // Otherwise, add on-chain apps at the end
       onChainApps.forEach(onChainApp => {
         const mockIndex = allApps.findIndex(mock => mock.slug === onChainApp.slug)
         if (mockIndex !== -1) {
-          // Reemplazar mock con datos on-chain
+          // Replace mock with on-chain data
           allApps[mockIndex] = { ...allApps[mockIndex], ...onChainApp, onChain: true }
         } else {
-          // Agregar nueva app on-chain
+          // Add new on-chain app
           allApps.push(onChainApp)
         }
       })
       
-      console.log(`📱 Mostrando ${allApps.length} apps (${onChainApps.length} on-chain, ${MOCK_APPS.length} mocks)`)
+      console.log(`📱 Showing ${allApps.length} apps (${onChainApps.length} on-chain, ${MOCK_APPS.length} mocks)`)
     } else {
-      console.log('ℹ️ No hay apps en el subgraph, mostrando solo mocks')
+      console.log('ℹ️ No apps in subgraph, showing only mocks')
     }
     
     return allApps
   }, [subgraphApps])
 
-  // Log del estado
+  // Log state
   useEffect(() => {
     if (subgraphError) {
-      console.error('❌ Error del subgraph:', subgraphError)
+      console.error('❌ Subgraph error:', subgraphError)
     }
   }, [subgraphError])
 
-  // Filtrar y ordenar apps
+  // Filter and sort apps
   const filteredApps = useMemo(() => {
     let filtered = [...apps]
 
-    // Búsqueda por nombre o descripción
+    // Search by name or description
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(app =>
@@ -108,19 +108,19 @@ export default function Home({ wallet, onAppClick }) {
       )
     }
 
-    // Filtrar por categoría
+    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(app => app.category === selectedCategory)
     }
 
-    // Filtrar por precio
+    // Filter by price
     if (selectedPriceFilter === 'free') {
       filtered = filtered.filter(app => app.price === 'Free')
     } else if (selectedPriceFilter === 'paid') {
       filtered = filtered.filter(app => app.price !== 'Free')
     }
 
-    // Ordenar
+    // Sort
     if (sortBy === 'name') {
       filtered.sort((a, b) => a.name.localeCompare(b.name))
     } else if (sortBy === 'price') {
@@ -134,7 +134,7 @@ export default function Home({ wallet, onAppClick }) {
     return filtered
   }, [apps, searchQuery, selectedCategory, selectedPriceFilter, sortBy])
 
-  // Contar apps del subgraph
+  // Count subgraph apps
   const onChainAppsCount = apps.filter(app => app.onChain).length
   const mockAppsCount = apps.filter(app => !app.onChain).length
 
@@ -146,10 +146,10 @@ export default function Home({ wallet, onAppClick }) {
           <span className="text-green-600 text-xl">✓</span>
           <div className="flex-1">
             <p className="text-sm font-medium text-green-900">
-              Conectado al subgraph
+              Connected to subgraph
             </p>
             <p className="text-xs text-green-700">
-              {apps.length} apps en total: {onChainAppsCount} registradas on-chain, {mockAppsCount} demos
+              {apps.length} total apps: {onChainAppsCount} registered on-chain, {mockAppsCount} demos
             </p>
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function Home({ wallet, onAppClick }) {
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           <div className="flex-1">
             <p className="text-sm font-medium text-blue-900">
-              Cargando apps desde el subgraph...
+              Loading apps from subgraph...
             </p>
           </div>
         </div>
@@ -171,10 +171,10 @@ export default function Home({ wallet, onAppClick }) {
           <span className="text-yellow-600 text-xl">ℹ️</span>
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-900">
-              Subgraph no disponible
+              Subgraph unavailable
             </p>
             <p className="text-xs text-yellow-700">
-              Mostrando {mockAppsCount} apps demo. Las apps registradas en blockchain aparecerán con el badge "⛓️ On-Chain".
+              Showing {mockAppsCount} demo apps. Apps registered on blockchain will appear with the "⛓️ On-Chain" badge.
             </p>
           </div>
         </div>
@@ -186,7 +186,7 @@ export default function Home({ wallet, onAppClick }) {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Buscar apps..."
+              placeholder="Search apps..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -201,9 +201,9 @@ export default function Home({ wallet, onAppClick }) {
             onChange={(e) => setSortBy(e.target.value)}
             className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="popular">Más populares</option>
-            <option value="name">Nombre A-Z</option>
-            <option value="price">Precio (menor a mayor)</option>
+            <option value="popular">Most popular</option>
+            <option value="name">Name A-Z</option>
+            <option value="price">Price (low to high)</option>
           </select>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function Home({ wallet, onAppClick }) {
         <aside className="col-span-3 space-y-6">
           {/* Categories */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold mb-4">Categorías</h3>
+            <h3 className="text-lg font-bold mb-4">Categories</h3>
             <div className="space-y-2">
               {CATEGORIES.map(category => (
                 <button
@@ -234,7 +234,7 @@ export default function Home({ wallet, onAppClick }) {
 
           {/* Price Filter */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold mb-4">Precio</h3>
+            <h3 className="text-lg font-bold mb-4">Price</h3>
             <div className="space-y-2">
               {PRICE_FILTERS.map(filter => (
                 <button
@@ -255,14 +255,14 @@ export default function Home({ wallet, onAppClick }) {
           {/* Stats */}
           {wallet?.isConnected && (
             <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-6 shadow-sm text-white">
-              <h3 className="text-lg font-bold mb-2">Tu Cuenta</h3>
+              <h3 className="text-lg font-bold mb-2">Your Account</h3>
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="opacity-80">Balance:</span>
                   <p className="font-bold">{wallet.balance.slice(0, 6)} ETH</p>
                 </div>
                 <div>
-                  <span className="opacity-80">Red:</span>
+                  <span className="opacity-80">Network:</span>
                   <p className="font-medium">{wallet.getNetworkName(wallet.chainId)}</p>
                 </div>
               </div>
@@ -275,9 +275,9 @@ export default function Home({ wallet, onAppClick }) {
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">
-                {searchQuery ? `Resultados para "${searchQuery}"` : 
+                {searchQuery ? `Results for "${searchQuery}"` : 
                  selectedCategory !== 'all' ? CATEGORIES.find(c => c.id === selectedCategory)?.name : 
-                 'Todas las Apps'}
+                 'All Apps'}
               </h2>
               <span className="text-sm text-gray-600">
                 {filteredApps.length} {filteredApps.length === 1 ? 'app' : 'apps'}
@@ -300,10 +300,10 @@ export default function Home({ wallet, onAppClick }) {
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  No se encontraron apps
+                  No apps found
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Intenta con otros términos de búsqueda o filtros
+                  Try different search terms or filters
                 </p>
                 <button
                   onClick={() => {
@@ -313,7 +313,7 @@ export default function Home({ wallet, onAppClick }) {
                   }}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Limpiar filtros
+                  Clear filters
                 </button>
               </div>
             )}

@@ -79,12 +79,12 @@ export default function Publish({ wallet }) {
               disabled={registering || !wallet.isConnected}
               className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {registering ? 'Registrando en Blockchain...' : 'Registrar App en Blockchain'}
+              {registering ? 'Registering on Blockchain...' : 'Register App on Blockchain'}
             </button>
 
             {!wallet.isConnected && (
               <p className="text-sm text-red-600 mt-2">
-                ⚠️ Conecta tu wallet para registrar la app
+                ⚠️ Connect your wallet to register the app
               </p>
             )}
           </div>
@@ -95,10 +95,10 @@ export default function Publish({ wallet }) {
           <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6 text-center">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-green-900 mb-2">
-              ¡App Publicada Exitosamente!
+              App Published Successfully!
             </h2>
             <p className="text-green-800 mb-4">
-              Tu app está ahora disponible en el DApp Store
+              Your app is now available on the DApp Store
             </p>
             <div className="bg-white rounded p-4 text-left">
               <p className="text-sm font-mono break-all">

@@ -16,12 +16,12 @@ export function useWallet() {
   const [signer, setSigner] = useState(null);
   const [error, setError] = useState(null);
 
-  // Detectar si MetaMask está instalado
+  // Detect if MetaMask is installed
   const isMetaMaskInstalled = useCallback(() => {
     return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
   }, []);
 
-  // Obtener balance
+  // Get balance
   const fetchBalance = useCallback(async (address, provider) => {
     try {
       const balance = await provider.getBalance(address);
@@ -31,10 +31,10 @@ export function useWallet() {
     }
   }, []);
 
-  // Conectar wallet
+  // Connect wallet
   const connect = useCallback(async () => {
     if (!isMetaMaskInstalled()) {
-      setError('MetaMask no está instalado. Por favor instálalo desde https://metamask.io');
+      setError('MetaMask is not installed. Please install it from https://metamask.io');
       return;
     }
 
@@ -42,16 +42,16 @@ export function useWallet() {
     setError(null);
 
     try {
-      // Solicitar acceso a la cuenta
+      // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
       });
 
       if (accounts.length === 0) {
-        throw new Error('No se seleccionó ninguna cuenta');
+        throw new Error('No account was selected');
       }
 
-      // Crear provider y signer
+      // Create provider and signer
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();

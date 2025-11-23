@@ -1,6 +1,6 @@
 /**
- * Página de detalle de una app
- * Muestra información completa, permite descargar
+ * App detail page
+ * Shows complete information, allows downloading
  */
 
 import React, { useState, useEffect } from 'react';
@@ -9,10 +9,10 @@ import { useAppStore } from '../hooks/useAppStore';
 import { downloadFromIPFS, downloadJSONFromIPFS, verifyFileIntegrity } from '../services/ipfs';
 
 export default function AppDetail({ slug, wallet, onBack }) {
-  // Hook del subgraph para obtener datos de la app
+  // Subgraph hook to get app data
   const { app: subgraphApp, loading: subgraphLoading, error: subgraphError } = useApp(slug);
   
-  // Hook del contrato para interacciones (descargas, etc)
+  // Contract hook for interactions (downloads, etc)
   const { downloadApp } = useAppStore(wallet);
   
   const [manifest, setManifest] = useState(null);
@@ -21,7 +21,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState(null);
 
-  // Cargar manifest cuando la app esté disponible
+  // Load manifest when app is available
   useEffect(() => {
     if (subgraphApp && subgraphApp.latestManifestCid) {
       loadManifest();
@@ -30,48 +30,48 @@ export default function AppDetail({ slug, wallet, onBack }) {
 
   const loadManifest = async () => {
     try {
-      console.log('📥 Descargando manifest desde IPFS:', subgraphApp.latestManifestCid);
+      console.log('📦 Loading manifest from IPFS:', subgraphApp.latestManifestCid);
       const manifestData = await downloadJSONFromIPFS(subgraphApp.latestManifestCid);
+      console.log('✅ Manifest loaded:', manifestData);
       setManifest(manifestData);
-      console.log('✅ Manifest cargado:', manifestData);
     } catch (err) {
-      console.error('❌ Error descargando manifest:', err);
-      // No es crítico, podemos mostrar la app sin el manifest completo
+      console.error('❌ Error loading manifest:', err);
+      // Not critical, we continue with subgraph data
     }
   };
 
-  // Descargar app (registra en el contrato)
+  // Download app (register on contract)
   const handleDownloadApp = async () => {
     if (!wallet?.isConnected) {
-      setError('Conecta tu wallet para descargar');
+      setError('Connect your wallet to download');
       return;
     }
 
     try {
       setError(null);
-      console.log('📥 Registrando descarga en blockchain...');
+      console.log('📥 Registering download on blockchain...');
       
       const result = await downloadApp(slug);
       
       if (result.success) {
         setTxHash(result.txHash);
-        console.log('✅ Descarga registrada! Tx:', result.txHash);
+        console.log('✅ Download registered! Tx:', result.txHash);
         
-        // Ahora descargar el APK
+        // Now download the APK
         await handleDownloadAPK();
       } else {
-        setError(result.error || 'Error al registrar la descarga');
+        setError(result.error || 'Error registering download');
       }
     } catch (err) {
-      console.error('❌ Error registrando descarga:', err);
-      setError(err.message || 'Error al registrar la descarga');
+      console.error('❌ Error registering download:', err);
+      setError(err.message || 'Error registering download');
     }
   };
 
-  // Descargar APK desde IPFS
+  // Download APK from IPFS
   const handleDownloadAPK = async () => {
     if (!manifest) {
-      setError('Manifest no disponible');
+      setError('Manifest not loaded');
       return;
     }
 
@@ -80,31 +80,29 @@ export default function AppDetail({ slug, wallet, onBack }) {
     setError(null);
 
     try {
-      console.log('📥 Descargando APK desde IPFS:', manifest.apk_cid);
+      console.log('📥 Downloading APK from IPFS:', manifest.apk_cid);
 
-      // 1. Descargar APK
+      // 1. Download APK
       setDownloadProgress(20);
       const apkBlob = await downloadFromIPFS(manifest.apk_cid);
       
       setDownloadProgress(60);
-      console.log('✅ APK descargado, tamaño:', apkBlob.size);
+      console.log('✅ APK downloaded, size:', apkBlob.size);
 
-      // 2. Verificar integridad
+      // 2. Verify integrity
       if (manifest.apk_sha256) {
-        console.log('🔍 Verificando integridad...');
+        console.log('🔍 Verifying integrity...');
         const isValid = await verifyFileIntegrity(apkBlob, manifest.apk_sha256);
         
         setDownloadProgress(80);
 
         if (!isValid) {
-          throw new Error('⚠️ Verificación de integridad falló. El archivo puede estar corrupto.');
+          throw new Error('Invalid APK integrity');
         }
-
-        console.log('✅ Integridad verificada!');
       }
 
-      // 3. Descargar archivo
-      setDownloadProgress(100);
+      // 3. Download file
+      setDownloadProgress(90);
       const url = URL.createObjectURL(apkBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -117,7 +115,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
       console.log('✅ Download complete!');
     } catch (err) {
       console.error('❌ Error downloading:', err);
-      setError(err.message || 'Error al descargar el APK');
+      setError(err.message || 'Error downloading APK');
     } finally {
       setDownloading(false);
       setDownloadProgress(0);
@@ -127,12 +125,10 @@ export default function AppDetail({ slug, wallet, onBack }) {
   // Loading state
   if (subgraphLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando aplicación...</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading app...</p>
         </div>
       </div>
     );
@@ -141,25 +137,23 @@ export default function AppDetail({ slug, wallet, onBack }) {
   // Error state
   if (subgraphError || !subgraphApp) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-red-900 mb-2">App no encontrada</h2>
-            <p className="text-red-700 mb-4">{subgraphError || error || 'No se pudo cargar la aplicación'}</p>
-            <button
-              onClick={onBack}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Volver al inicio
-            </button>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">App not found</h2>
+          <p className="text-gray-600 mb-6">{subgraphError || 'This app does not exist'}</p>
+          <button
+            onClick={onBack}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back to home
+          </button>
         </div>
       </div>
     );
   }
 
-  // En el contrato simplificado, todas las apps son gratuitas
+  // In the simplified contract, all apps are free
   const canDownload = true;
 
   return (
@@ -170,7 +164,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
           onClick={onBack}
           className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition"
         >
-          <span>←</span> Volver
+          <span>←</span> Back
         </button>
 
         {/* Main Card */}
@@ -194,14 +188,14 @@ export default function AppDetail({ slug, wallet, onBack }) {
               {/* Info */}
               <div className="flex-1">
                 <h1 className="text-3xl font-bold mb-2">{manifest?.name || subgraphApp.name}</h1>
-                <p className="text-blue-100 mb-3">{manifest?.description || 'App descentralizada'}</p>
+                <p className="text-blue-100 mb-3">{manifest?.description || 'Decentralized app'}</p>
                 
                 <div className="flex items-center gap-4 text-sm">
                   <span className="bg-white/20 px-3 py-1 rounded-full">
                     {manifest ? `v${manifest.version}` : 'v1.0'}
                   </span>
                   {manifest?.package && <span>📦 {manifest.package}</span>}
-                  <span>⬇️ {subgraphApp.totalDownloads} descargas</span>
+                  <span>⬇️ {subgraphApp.totalDownloads} downloads</span>
                 </div>
               </div>
 
@@ -211,7 +205,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
                   ⛓️ On-Chain
                 </div>
                 <div className="mt-2 text-blue-100 text-sm">
-                  GRATIS
+                  FREE
                 </div>
               </div>
             </div>
@@ -226,16 +220,16 @@ export default function AppDetail({ slug, wallet, onBack }) {
                 className="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
               >
                 {downloading ? (
-                  <span>📥 Descargando... {downloadProgress}%</span>
+                  <span>📥 Downloading... {downloadProgress}%</span>
                 ) : (
-                  <span>📥 Descargar APK</span>
+                  <span>📥 Download APK</span>
                 )}
               </button>
             </div>
 
             {!wallet?.isConnected && (
               <p className="text-sm text-yellow-600 mt-2 text-center">
-                ⚠️ Conecta tu wallet para registrar la descarga en blockchain
+                ⚠️ Connect your wallet to register the download on blockchain
               </p>
             )}
 
@@ -262,7 +256,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
           {txHash && (
             <div className="mx-6 mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm text-green-800 mb-2">
-                ✅ ¡Descarga registrada en blockchain!
+                ✅ Download registered on blockchain!
               </p>
               <p className="text-xs font-mono text-green-700 break-all">
                 Tx: {txHash}
@@ -274,24 +268,24 @@ export default function AppDetail({ slug, wallet, onBack }) {
           <div className="p-6 grid grid-cols-2 gap-6">
             {/* Left Column */}
             <div>
-              <h3 className="text-lg font-bold mb-4">Información</h3>
+              <h3 className="text-lg font-bold mb-4">Information</h3>
               
               <div className="space-y-3 text-sm">
                 <div>
                   <span className="text-gray-600">Publisher:</span>
-                  <p className="font-medium">{manifest?.publisher_name || 'Anónimo'}</p>
+                  <p className="font-medium">{manifest?.publisher_name || 'Anonymous'}</p>
                   <p className="text-xs font-mono text-gray-500">{subgraphApp.publisher?.address || subgraphApp.publisher?.id}</p>
                 </div>
 
                 {manifest && (
                   <>
                     <div>
-                      <span className="text-gray-600">Versión:</span>
-                      <p className="font-medium">{manifest.version} (código {manifest.versionCode})</p>
+                      <span className="text-gray-600">Version:</span>
+                      <p className="font-medium">{manifest.version} (code {manifest.versionCode})</p>
                     </div>
 
                     <div>
-                      <span className="text-gray-600">Tamaño:</span>
+                      <span className="text-gray-600">Size:</span>
                       <p className="font-medium">{(manifest.apk_size / 1024 / 1024).toFixed(2)} MB</p>
                     </div>
 
@@ -301,8 +295,8 @@ export default function AppDetail({ slug, wallet, onBack }) {
                     </div>
 
                     <div>
-                      <span className="text-gray-600">Licencia:</span>
-                      <p className="font-medium">{manifest.license || 'No especificada'}</p>
+                      <span className="text-gray-600">License:</span>
+                      <p className="font-medium">{manifest.license || 'Not specified'}</p>
                     </div>
                   </>
                 )}
@@ -323,7 +317,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
 
                 {manifest?.source_code && (
                   <div>
-                    <span className="text-gray-600">Código fuente:</span>
+                    <span className="text-gray-600">Source code:</span>
                     <a
                       href={manifest.source_code}
                       target="_blank"
@@ -339,7 +333,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
 
             {/* Right Column */}
             <div>
-              <h3 className="text-lg font-bold mb-4">Permisos</h3>
+              <h3 className="text-lg font-bold mb-4">Permissions</h3>
               
               {manifest?.permissions && manifest.permissions.length > 0 ? (
                 <div className="space-y-2">
@@ -354,13 +348,13 @@ export default function AppDetail({ slug, wallet, onBack }) {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No requiere permisos especiales</p>
+                <p className="text-sm text-gray-500">No special permissions required</p>
               )}
 
               {/* Categories */}
               {manifest?.categories && manifest.categories.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-bold mb-3">Categorías</h3>
+                  <h3 className="text-lg font-bold mb-3">Categories</h3>
                   <div className="flex flex-wrap gap-2">
                     {manifest.categories.map((category, index) => (
                       <span
@@ -379,7 +373,7 @@ export default function AppDetail({ slug, wallet, onBack }) {
           {/* Version History */}
           {subgraphApp.versions && subgraphApp.versions.length > 0 && (
             <div className="p-6 border-t">
-              <h3 className="text-lg font-bold mb-4">Historial de Versiones</h3>
+              <h3 className="text-lg font-bold mb-4">Version History</h3>
               <div className="space-y-3">
                 {subgraphApp.versions.map((version, index) => (
                   <div
@@ -387,10 +381,10 @@ export default function AppDetail({ slug, wallet, onBack }) {
                     className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg"
                   >
                     <div>
-                      <span className="font-medium">Versión {version.versionCode}</span>
+                      <span className="font-medium">Version {version.versionCode}</span>
                       {version.deprecated && (
                         <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-                          Obsoleta
+                          Deprecated
                         </span>
                       )}
                     </div>
@@ -405,10 +399,10 @@ export default function AppDetail({ slug, wallet, onBack }) {
 
           {/* Blockchain Info */}
           <div className="p-6 bg-gray-50 border-t">
-            <h3 className="text-lg font-bold mb-3">Información Blockchain</h3>
+            <h3 className="text-lg font-bold mb-3">Blockchain Information</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Total descargas:</span>
+                <span className="text-gray-600">Total downloads:</span>
                 <p className="font-medium">{subgraphApp.totalDownloads}</p>
               </div>
               <div>
@@ -416,12 +410,12 @@ export default function AppDetail({ slug, wallet, onBack }) {
                 <p className="font-medium">{subgraphApp.slug}</p>
               </div>
               <div>
-                <span className="text-gray-600">Registrada:</span>
+                <span className="text-gray-600">Registered:</span>
                 <p className="font-medium">{new Date(Number(subgraphApp.createdAt) * 1000).toLocaleDateString()}</p>
               </div>
               <div>
-                <span className="text-gray-600">Estado:</span>
-                <p className="font-medium">{subgraphApp.active ? '✅ Activa' : '❌ Inactiva'}</p>
+                <span className="text-gray-600">Status:</span>
+                <p className="font-medium">{subgraphApp.active ? '✅ Active' : '❌ Inactive'}</p>
               </div>
             </div>
 

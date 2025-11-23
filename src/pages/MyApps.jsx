@@ -1,6 +1,6 @@
 /**
- * Página de apps publicadas por el usuario
- * Muestra las apps que el usuario ha registrado on-chain
+ * User published apps page
+ * Shows the apps that the user has registered on-chain
  */
 
 import React, { useState } from 'react';
@@ -10,7 +10,7 @@ import AppIcon from '../components/AppIcon';
 export default function MyApps({ wallet, onAppClick }) {
   const [downloading, setDownloading] = useState(null);
   
-  // Obtener apps del publisher desde el subgraph
+  // Get publisher apps from subgraph
   const { 
     publisher, 
     apps: publishedApps, 
@@ -21,13 +21,13 @@ export default function MyApps({ wallet, onAppClick }) {
   const handleDownload = async (slug) => {
     setDownloading(slug);
     try {
-      // Simular descarga
+      // Simulate download
       await new Promise(resolve => setTimeout(resolve, 2000));
       console.log('Downloaded:', slug);
-      alert(`Descargando ${slug}...`);
+      alert(`Downloading ${slug}...`);
     } catch (err) {
       console.error('Error downloading:', err);
-      alert('Error al descargar');
+      alert('Error downloading');
     } finally {
       setDownloading(null);
     }
@@ -40,10 +40,10 @@ export default function MyApps({ wallet, onAppClick }) {
           <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
             <div className="text-6xl mb-4">🔐</div>
             <h2 className="text-2xl font-bold text-yellow-900 mb-2">
-              Conecta tu Wallet
+              Connect Your Wallet
             </h2>
             <p className="text-yellow-700">
-              Conecta tu wallet para ver las apps que has publicado
+              Connect your wallet to see the apps you have published
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function MyApps({ wallet, onAppClick }) {
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando tus apps desde blockchain...</p>
+            <p className="text-gray-600">Loading your apps from blockchain...</p>
           </div>
         </div>
       </div>
@@ -71,13 +71,13 @@ export default function MyApps({ wallet, onAppClick }) {
           <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
             <div className="text-6xl mb-4">⚠️</div>
             <h2 className="text-2xl font-bold text-red-900 mb-2">
-              Error al cargar apps
+              Error loading apps
             </h2>
             <p className="text-red-700 mb-4">
               {error}
             </p>
             <p className="text-sm text-red-600">
-              Asegúrate de que el subgraph esté corriendo y desplegado.
+              Make sure the subgraph is running and deployed.
             </p>
           </div>
         </div>
@@ -90,9 +90,9 @@ export default function MyApps({ wallet, onAppClick }) {
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Mis Apps Publicadas</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Published Apps</h1>
           <p className="text-gray-600">
-            Apps que has registrado en blockchain como publisher
+            Apps you have registered on blockchain as publisher
           </p>
           {publisher && (
             <div className="mt-3 inline-block bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
@@ -107,7 +107,7 @@ export default function MyApps({ wallet, onAppClick }) {
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <div className="text-3xl mb-2">📱</div>
             <div className="text-3xl font-bold text-gray-900">{publishedApps?.length || 0}</div>
-            <div className="text-sm text-gray-600">Apps publicadas</div>
+            <div className="text-sm text-gray-600">Published apps</div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -115,7 +115,7 @@ export default function MyApps({ wallet, onAppClick }) {
             <div className="text-3xl font-bold text-gray-900">
               {publishedApps?.reduce((sum, app) => sum + Number(app.totalDownloads || 0), 0) || 0}
             </div>
-            <div className="text-sm text-gray-600">Descargas totales</div>
+            <div className="text-sm text-gray-600">Total downloads</div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -123,7 +123,7 @@ export default function MyApps({ wallet, onAppClick }) {
             <div className="text-3xl font-bold text-gray-900">
               On-Chain
             </div>
-            <div className="text-sm text-gray-600">Estado</div>
+            <div className="text-sm text-gray-600">Status</div>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export default function MyApps({ wallet, onAppClick }) {
         {publishedApps && publishedApps.length > 0 ? (
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className="p-6 border-b bg-gray-50">
-              <h2 className="text-xl font-bold">Tus Aplicaciones</h2>
+              <h2 className="text-xl font-bold">Your Applications</h2>
             </div>
 
             <div className="divide-y">
@@ -153,7 +153,7 @@ export default function MyApps({ wallet, onAppClick }) {
                         {app.name}
                       </h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>📥 {app.totalDownloads} descargas</span>
+                        <span>📥 {app.totalDownloads} downloads</span>
                         <span>📅 {new Date(Number(app.createdAt) * 1000).toLocaleDateString()}</span>
                         <span className="inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-medium">
                           ⛓️ On-Chain
@@ -167,7 +167,7 @@ export default function MyApps({ wallet, onAppClick }) {
                         onClick={() => onAppClick && onAppClick(app.slug)}
                         className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
                       >
-                        Ver Detalles
+                        View Details
                       </button>
 
                       <button
@@ -176,9 +176,9 @@ export default function MyApps({ wallet, onAppClick }) {
                         className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
                       >
                         {downloading === app.slug ? (
-                          <span>⏳ Descargando...</span>
+                          <span>⏳ Downloading...</span>
                         ) : (
-                          <span>📥 Descargar</span>
+                          <span>📥 Download</span>
                         )}
                       </button>
                     </div>
@@ -191,28 +191,28 @@ export default function MyApps({ wallet, onAppClick }) {
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">📱</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              No has publicado ninguna app aún
+              You haven't published any apps yet
             </h2>
             <p className="text-gray-600 mb-6">
-              Publica tu primera app en blockchain y compártela con el mundo
+              Publish your first app on blockchain and share it with the world
             </p>
             <button
               onClick={() => window.location.href = '/publish'}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
             >
-              Publicar App
+              Publish App
             </button>
           </div>
         )}
 
         {/* Info Box */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6">
-          <h3 className="font-bold text-blue-900 mb-2">💡 Como Publisher</h3>
+          <h3 className="font-bold text-blue-900 mb-2">💡 As Publisher</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Tus apps están registradas permanentemente en blockchain</li>
-            <li>• Puedes publicar nuevas versiones en cualquier momento</li>
-            <li>• Las estadísticas de descarga son transparentes y verificables</li>
-            <li>• Los usuarios pueden verificar la autenticidad de tus apps</li>
+            <li>• Your apps are permanently registered on blockchain</li>
+            <li>• You can publish new versions at any time</li>
+            <li>• Download statistics are transparent and verifiable</li>
+            <li>• Users can verify the authenticity of your apps</li>
           </ul>
         </div>
       </div>
