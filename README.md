@@ -2,6 +2,8 @@
 
 Decentralized App Store using **Smart Contracts** (Ethereum), **IPFS** for storage, and **React PWA** for the frontend.
 
+* https://ethglobal.com/showcase/android-dapp-store-boj7g
+
 ## 🎯 Overview
 
 A fully decentralized platform where:
@@ -177,19 +179,19 @@ The download process has two distinct phases:
 
 ### What Blockchain Registration Provides
 
-✅ **On-chain statistics**: Reliable download counts  
-✅ **Traceability**: Know who downloaded (wallet address)  
-✅ **Timestamps**: When downloads occurred  
-✅ **Opt-in analytics**: Users consciously register downloads  
-✅ **Future monetization**: Foundation for paid downloads  
+✅ **On-chain statistics**: Reliable download counts
+✅ **Traceability**: Know who downloaded (wallet address)
+✅ **Timestamps**: When downloads occurred
+✅ **Opt-in analytics**: Users consciously register downloads
+✅ **Future monetization**: Foundation for paid downloads
 
 ### What It Does NOT Prevent
 
 The decentralized nature of IPFS/Filecoin means:
 
-❌ **Cannot prevent direct IPFS access**: Anyone with a CID can download  
-❌ **Cannot enforce authentication**: IPFS is public and permissionless  
-❌ **Cannot block technical users**: Browser console access exists  
+❌ **Cannot prevent direct IPFS access**: Anyone with a CID can download
+❌ **Cannot enforce authentication**: IPFS is public and permissionless
+❌ **Cannot block technical users**: Browser console access exists
 
 ```javascript
 // Technically possible (but not through UI):
