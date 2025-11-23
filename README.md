@@ -8,9 +8,11 @@ A fully decentralized platform where:
 - 📱 Developers publish Android apps (APKs)
 - 💰 Direct monetization with crypto (ETH/tokens)
 - 🔒 No censorship or intermediaries
-- 📦 IPFS storage
-- ⛓️ On-chain metadata and payments
-- 🔍 Full transparency
+- 📦 Filecoin/IPFS storage (public and permissionless)
+- ⛓️ On-chain metadata, payments, and download tracking
+- 🔍 Full transparency and traceability
+
+> **Note**: Files stored on IPFS/Filecoin are publicly accessible by design. The blockchain tracks downloads for statistics and traceability, not access control. See [Download Security Model](#-download-security-model) for details.
 
 ## ⚡ Quick Start
 
@@ -148,7 +150,92 @@ See `/contracts/README.md` for complete documentation.
 └─────────────────────────┘
 ```
 
-## 📋 Documentation
+## � Download Security Model
+
+### How Downloads Work
+
+The download process has two distinct phases:
+
+**1. Blockchain Registration (Required)**
+```javascript
+// User clicks "Download APK"
+// → Opens MetaMask to sign transaction
+// → Executes downloadApp(slug) on smart contract
+// → Records download on-chain with:
+//   - Downloader's wallet address
+//   - Timestamp
+//   - Increments download counter
+```
+
+**2. File Download (After Registration)**
+```javascript
+// Only executed if blockchain registration succeeds
+// → Downloads APK from Filecoin/IPFS
+// → Verifies integrity (SHA-256)
+// → Triggers browser download
+```
+
+### What Blockchain Registration Provides
+
+✅ **On-chain statistics**: Reliable download counts  
+✅ **Traceability**: Know who downloaded (wallet address)  
+✅ **Timestamps**: When downloads occurred  
+✅ **Opt-in analytics**: Users consciously register downloads  
+✅ **Future monetization**: Foundation for paid downloads  
+
+### What It Does NOT Prevent
+
+The decentralized nature of IPFS/Filecoin means:
+
+❌ **Cannot prevent direct IPFS access**: Anyone with a CID can download  
+❌ **Cannot enforce authentication**: IPFS is public and permissionless  
+❌ **Cannot block technical users**: Browser console access exists  
+
+```javascript
+// Technically possible (but not through UI):
+// 1. Get manifest CID from subgraph
+// 2. Download manifest from IPFS
+// 3. Extract APK CID from manifest
+// 4. Download APK directly from any IPFS gateway
+```
+
+### Web3 Philosophy
+
+```
+Content on IPFS/Filecoin is PUBLIC by design.
+Blockchain registration is for TRACEABILITY, not ACCESS CONTROL.
+This aligns with decentralized and censorship-resistant principles.
+```
+
+### When You Need Strict Access Control
+
+If you require true access control, consider:
+
+1. **File Encryption**
+   - Encrypt APKs before uploading to IPFS
+   - Provide decryption keys only after successful transaction
+   - Adds complexity but enables real control
+
+2. **Token Gating**
+   ```solidity
+   function downloadApp(string calldata slug) external {
+       require(nftContract.balanceOf(msg.sender) > 0, "Need NFT");
+       _recordDownload(key);
+   }
+   ```
+
+3. **Paid Downloads**
+   ```solidity
+   function downloadApp(string calldata slug) external payable {
+       require(msg.value >= price, "Insufficient payment");
+       _recordDownload(key);
+       payable(publisher).transfer(msg.value);
+   }
+   ```
+
+**Current implementation prioritizes**: Simplicity, decentralization, and transparency over strict access control.
+
+## �📋 Documentation
 
 - **`IMPLEMENTATION_COMPLETE.md`** - ✅ Complete implementation summary
 - **`IPFS_IMPLEMENTATION.md`** - ✅ IPFS integration summary
@@ -195,6 +282,7 @@ See `/contracts/README.md` for complete documentation.
 - ✅ React hooks for subgraph
 - ✅ Complete GraphQL queries
 - ✅ Complete documentation
+- ✅ Download security model documentation
 
 ### Optional Extras
 - ⏳ Subgraph deployment (manual)
