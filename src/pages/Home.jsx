@@ -3,14 +3,15 @@ import AppCard from '../components/AppCard'
 import { useAppStore } from '../hooks/useAppStore'
 
 // Apps de ejemplo - se enriquecerán con datos del contrato si existen
+// Nota: Todas las apps son gratuitas porque el contrato simplificado no maneja precios
 const MOCK_APPS = [
   { slug: 'dicegame', name: 'DiceGame', price: 'Free', icon: '/mockup-assets/dice.png', category: 'games', description: 'Fun dice rolling game' },
-  { slug: 'chatty', name: 'Chatty', price: '0.1 ETH', icon: '/mockup-assets/chatty.png', category: 'social', description: 'Decentralized messaging' },
+  { slug: 'chatty', name: 'Chatty', price: 'Free', icon: '/mockup-assets/chatty.png', category: 'social', description: 'Decentralized messaging' },
   { slug: 'taskmaster', name: 'TaskMaster', price: 'Free', icon: '/mockup-assets/task.png', category: 'productivity', description: 'Task management app' },
-  { slug: 'smiles', name: 'Smiles', price: '2.5 ETH', icon: '/mockup-assets/smiles.png', category: 'entertainment', description: 'Emoji collection' },
+  { slug: 'smiles', name: 'Smiles', price: 'Free', icon: '/mockup-assets/smiles.png', category: 'entertainment', description: 'Emoji collection' },
   { slug: 'cryptowallet', name: 'CryptoWallet', price: 'Free', icon: '/mockup-assets/wallet.png', category: 'finance', description: 'Secure crypto wallet' },
-  { slug: 'nftgallery', name: 'NFT Gallery', price: '0.05 ETH', icon: '/mockup-assets/nft.png', category: 'entertainment', description: 'View your NFTs' },
-  { slug: 'defi-tracker', name: 'DeFi Tracker', price: '0.02 ETH', icon: '/mockup-assets/defi.png', category: 'finance', description: 'Track DeFi positions' },
+  { slug: 'nftgallery', name: 'NFT Gallery', price: 'Free', icon: '/mockup-assets/nft.png', category: 'entertainment', description: 'View your NFTs' },
+  { slug: 'defi-tracker', name: 'DeFi Tracker', price: 'Free', icon: '/mockup-assets/defi.png', category: 'finance', description: 'Track DeFi positions' },
   { slug: 'web3-browser', name: 'Web3 Browser', price: 'Free', icon: '/mockup-assets/browser.png', category: 'tools', description: 'Browse Web3' }
 ]
 
@@ -116,7 +117,7 @@ export default function Home({ wallet, onAppClick }) {
   }, [apps, searchQuery, selectedCategory, selectedPriceFilter, sortBy])
 
   // Contar apps del contrato
-  const contractAppsCount = apps.filter(app => app.fromContract).length
+  const contractAppsCount = apps.filter(app => app.onChain).length
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">

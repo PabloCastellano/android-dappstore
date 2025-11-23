@@ -8,7 +8,7 @@ dataSources:
     source:
       # IMPORTANT: Update this address after deploying with Account #1
       # The new address will be different from the default deployment
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      address: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
       abi: AppStore
       startBlock: 0
     mapping:
@@ -19,25 +19,19 @@ dataSources:
         - App
         - AppVersion
         - Publisher
-        - Purchase
         - User
         - Download
-        - PriceUpdate
         - GlobalStats
       abis:
         - name: AppStore
           file: ../artifacts/contracts/AppStore.sol/AppStore.json
       eventHandlers:
-        - event: AppRegistered(indexed bytes32,string,indexed address,string,uint256)
+        - event: AppRegistered(indexed bytes32,string,indexed address,string)
           handler: handleAppRegistered
         - event: VersionPublished(indexed bytes32,string,uint256)
           handler: handleVersionPublished
-        - event: AppPurchased(indexed bytes32,indexed address,uint256,uint256)
-          handler: handleAppPurchased
         - event: AppDownloaded(indexed bytes32,indexed address)
           handler: handleAppDownloaded
-        - event: AppUpdated(indexed bytes32,uint256)
-          handler: handleAppUpdated
         - event: AppStatusChanged(indexed bytes32,bool)
           handler: handleAppStatusChanged
       file: ./src/mapping.ts

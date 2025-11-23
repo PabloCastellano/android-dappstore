@@ -29,7 +29,6 @@ export default function Publish({ wallet }) {
       const result = await registerApp({
         slug: uploadResult.manifest.slug,
         manifestCid: uploadResult.manifestCID,
-        priceEth: '0', // Gratis por defecto, puedes agregar un input
         versionCode: uploadResult.manifest.versionCode
       });
 

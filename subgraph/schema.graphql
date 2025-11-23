@@ -9,15 +9,12 @@ type App @entity(immutable: false) {
   name: String!
   latestManifestCid: String!
   latestVersion: AppVersion
-  priceWei: BigInt!
-  priceEth: String!
   totalDownloads: BigInt!
-  totalRevenue: BigInt!
   active: Boolean!
   createdAt: BigInt!
   updatedAt: BigInt!
   versions: [AppVersion!]! @derivedFrom(field: "app")
-  purchases: [Purchase!]! @derivedFrom(field: "app")
+  downloads: [Download!]! @derivedFrom(field: "app")
 }
 
 type AppVersion @entity(immutable: false) {
@@ -35,42 +32,22 @@ type Publisher @entity(immutable: false) {
   address: Bytes!
   apps: [App!]! @derivedFrom(field: "publisher")
   totalApps: BigInt!
-  totalRevenue: BigInt!
   totalDownloads: BigInt!
   createdAt: BigInt!
-}
-
-type Purchase @entity(immutable: true) {
-  id: ID! # txHash-logIndex
-  app: App!
-  buyer: User!
-  price: BigInt!
-  timestamp: BigInt!
-  transactionHash: Bytes!
 }
 
 type User @entity(immutable: false) {
   id: ID! # address
   address: Bytes!
-  purchases: [Purchase!]! @derivedFrom(field: "buyer")
-  totalPurchases: BigInt!
-  totalSpent: BigInt!
+  downloads: [Download!]! @derivedFrom(field: "user")
+  totalDownloads: BigInt!
   createdAt: BigInt!
 }
 
 type Download @entity(immutable: true) {
   id: ID! # txHash-logIndex
   app: App!
-  user: Bytes!
-  timestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type PriceUpdate @entity(immutable: true) {
-  id: ID! # txHash-logIndex
-  app: App!
-  oldPrice: BigInt!
-  newPrice: BigInt!
+  user: User!
   timestamp: BigInt!
   transactionHash: Bytes!
 }
@@ -80,8 +57,6 @@ type GlobalStats @entity(immutable: false) {
   totalApps: BigInt!
   totalPublishers: BigInt!
   totalUsers: BigInt!
-  totalPurchases: BigInt!
   totalDownloads: BigInt!
-  totalRevenue: BigInt!
   updatedAt: BigInt!
 }

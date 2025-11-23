@@ -8,19 +8,17 @@ import { ethers } from 'ethers';
 
 // ABI del contrato AppStore (solo las funciones que usamos)
 const APP_STORE_ABI = [
-  "function registerApp(string calldata slug, string calldata manifestCid, uint256 priceWei, uint256 versionCode) external",
+  "function registerApp(string calldata slug, string calldata manifestCid, uint256 versionCode) external",
   "function publishVersion(string calldata slug, string calldata manifestCid, uint256 versionCode) external",
-  "function purchaseApp(string calldata slug) external payable",
-  "function updatePrice(string calldata slug, uint256 newPriceWei) external",
-  "function getApp(string calldata slug) external view returns (tuple(address publisher, string slug, string latestManifestCid, uint256 priceWei, uint256 totalDownloads, uint256 totalRevenue, bool exists, bool active, uint256 createdAt))",
+  "function downloadApp(string calldata slug) external",
+  "function deprecateVersion(string calldata slug, uint256 versionIndex) external",
+  "function getApp(string calldata slug) external view returns (tuple(address publisher, string slug, string latestManifestCid, uint256 totalDownloads, bool exists, bool active, uint256 createdAt))",
   "function getLatestManifest(string calldata slug) external view returns (string memory)",
   "function getVersionCount(string calldata slug) external view returns (uint256)",
   "function getVersion(string calldata slug, uint256 index) external view returns (tuple(string manifestCid, uint256 timestamp, uint256 versionCode, bool deprecated))",
-  "function hasUserPurchased(address user, string calldata slug) external view returns (bool)",
   "function totalApps() external view returns (uint256)",
-  "function platformFee() external view returns (uint256)",
-  "event AppRegistered(bytes32 indexed appKey, string slug, address indexed publisher, string manifestCid, uint256 priceWei)",
-  "event AppPurchased(bytes32 indexed appKey, address indexed buyer, uint256 amountPaid, uint256 platformFee)",
+  "event AppRegistered(bytes32 indexed appKey, string slug, address indexed publisher, string manifestCid)",
+  "event AppDownloaded(bytes32 indexed appKey, address indexed downloader)",
   "event VersionPublished(bytes32 indexed appKey, string manifestCid, uint256 versionCode)"
 ];
 
@@ -77,7 +75,7 @@ export function useAppStore(wallet) {
   }, [wallet?.signer, contractAddress]);
 
   // Registrar nueva app
-  const registerApp = useCallback(async ({ slug, manifestCid, priceEth, versionCode }) => {
+  const registerApp = useCallback(async ({ slug, manifestCid, versionCode }) => {
     if (!contract) {
       return { success: false, error: 'Contrato no inicializado' };
     }
@@ -86,11 +84,9 @@ export function useAppStore(wallet) {
     setError(null);
 
     try {
-      const priceWei = ethers.parseEther(priceEth.toString());
-      
-      console.log('📝 Registering app:', { slug, manifestCid, priceWei: priceWei.toString(), versionCode });
+      console.log('📝 Registering app:', { slug, manifestCid, versionCode });
 
-      const tx = await contract.registerApp(slug, manifestCid, priceWei, versionCode);
+      const tx = await contract.registerApp(slug, manifestCid, versionCode);
       console.log('⏳ Transaction sent:', tx.hash);
 
       const receipt = await tx.wait();
@@ -144,8 +140,8 @@ export function useAppStore(wallet) {
     }
   }, [contract]);
 
-  // Comprar app
-  const purchaseApp = useCallback(async (slug, priceEth) => {
+  // Descargar app
+  const downloadApp = useCallback(async (slug) => {
     if (!contract) {
       return { success: false, error: 'Contrato no inicializado' };
     }
@@ -154,15 +150,13 @@ export function useAppStore(wallet) {
     setError(null);
 
     try {
-      const priceWei = ethers.parseEther(priceEth.toString());
-      
-      console.log('💰 Purchasing app:', { slug, price: priceEth });
+      console.log('📥 Downloading app:', { slug });
 
-      const tx = await contract.purchaseApp(slug, { value: priceWei });
+      const tx = await contract.downloadApp(slug);
       console.log('⏳ Transaction sent:', tx.hash);
 
       const receipt = await tx.wait();
-      console.log('✅ App purchased! Block:', receipt.blockNumber);
+      console.log('✅ App downloaded! Block:', receipt.blockNumber);
 
       return {
         success: true,
@@ -170,43 +164,8 @@ export function useAppStore(wallet) {
         receipt
       };
     } catch (err) {
-      console.error('❌ Error purchasing app:', err);
-      const errorMessage = err.reason || err.message || 'Error al comprar app';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, [contract]);
-
-  // Actualizar precio
-  const updatePrice = useCallback(async (slug, newPriceEth) => {
-    if (!contract) {
-      return { success: false, error: 'Contrato no inicializado' };
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const priceWei = ethers.parseEther(newPriceEth.toString());
-      
-      console.log('💵 Updating price:', { slug, newPrice: newPriceEth });
-
-      const tx = await contract.updatePrice(slug, priceWei);
-      console.log('⏳ Transaction sent:', tx.hash);
-
-      const receipt = await tx.wait();
-      console.log('✅ Price updated! Block:', receipt.blockNumber);
-
-      return {
-        success: true,
-        txHash: tx.hash,
-        receipt
-      };
-    } catch (err) {
-      console.error('❌ Error updating price:', err);
-      const errorMessage = err.reason || err.message || 'Error al actualizar precio';
+      console.error('❌ Error downloading app:', err);
+      const errorMessage = err.reason || err.message || 'Error al descargar app';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -227,10 +186,7 @@ export function useAppStore(wallet) {
         publisher: app.publisher,
         slug: app.slug,
         latestManifestCid: app.latestManifestCid,
-        priceWei: app.priceWei.toString(),
-        priceEth: ethers.formatEther(app.priceWei),
         totalDownloads: Number(app.totalDownloads),
-        totalRevenue: ethers.formatEther(app.totalRevenue),
         exists: app.exists,
         active: app.active,
         createdAt: new Date(Number(app.createdAt) * 1000)
@@ -241,20 +197,6 @@ export function useAppStore(wallet) {
     }
   }, [contract]);
 
-  // Verificar si usuario compró app
-  const checkPurchase = useCallback(async (slug) => {
-    if (!contract || !wallet?.address) {
-      return false;
-    }
-
-    try {
-      const hasPurchased = await contract.hasUserPurchased(wallet.address, slug);
-      return hasPurchased;
-    } catch (err) {
-      console.error('❌ Error checking purchase:', err);
-      return false;
-    }
-  }, [contract, wallet?.address]);
 
   // Obtener versiones de una app
   const getVersions = useCallback(async (slug) => {
@@ -298,18 +240,61 @@ export function useAppStore(wallet) {
     }
   }, [contract]);
 
-  // Obtener platform fee
-  const getPlatformFee = useCallback(async () => {
+  // Obtener todas las apps del contrato
+  // NOTA: El contrato no tiene función para listar apps, solo retorna el total
+  // Por ahora retornamos array vacío y usamos enrichAppsWithContractData
+  const getAllAppsFromContract = useCallback(async () => {
     if (!contract) {
-      return 0;
+      return [];
     }
 
     try {
-      const fee = await contract.platformFee();
-      return Number(fee) / 100; // Convertir basis points a porcentaje
+      // El contrato solo tiene totalApps() pero no una forma de iterar
+      // Retornamos array vacío para que se usen los mocks enriquecidos
+      return [];
     } catch (err) {
-      console.error('❌ Error getting platform fee:', err);
-      return 0;
+      console.error('❌ Error getting apps from contract:', err);
+      return [];
+    }
+  }, [contract]);
+
+  // Enriquecer apps con datos del contrato si existen
+  const enrichAppsWithContractData = useCallback(async (apps) => {
+    if (!contract) {
+      return apps;
+    }
+
+    try {
+      const enrichedApps = await Promise.all(
+        apps.map(async (app) => {
+          try {
+            // Intentar obtener datos del contrato para este slug
+            const contractApp = await contract.getApp(app.slug);
+            
+            if (contractApp.exists) {
+              // App existe en el contrato, enriquecer con datos reales
+              return {
+                ...app,
+                publisher: contractApp.publisher,
+                latestManifestCid: contractApp.latestManifestCid,
+                totalDownloads: Number(contractApp.totalDownloads),
+                active: contractApp.active,
+                createdAt: new Date(Number(contractApp.createdAt) * 1000),
+                onChain: true
+              };
+            }
+          } catch (err) {
+            // App no existe en el contrato, mantener datos mock
+            console.log(`ℹ️ App ${app.slug} not on chain, using mock data`);
+          }
+          return { ...app, onChain: false };
+        })
+      );
+
+      return enrichedApps;
+    } catch (err) {
+      console.error('❌ Error enriching apps:', err);
+      return apps;
     }
   }, [contract]);
 
@@ -324,15 +309,14 @@ export function useAppStore(wallet) {
     // Métodos de escritura
     registerApp,
     publishVersion,
-    purchaseApp,
-    updatePrice,
+    downloadApp,
 
     // Métodos de lectura
     getApp,
-    checkPurchase,
     getVersions,
     getTotalApps,
-    getPlatformFee
+    getAllAppsFromContract,
+    enrichAppsWithContractData
   };
 }
 

@@ -2,23 +2,19 @@ import { BigInt, Bytes } from "@graphprotocol/graph-ts";
 import {
   AppRegistered,
   VersionPublished,
-  AppPurchased,
   AppDownloaded,
-  AppUpdated,
   AppStatusChanged
 } from "../generated/AppStore/AppStore";
 import {
   App,
   AppVersion,
   Publisher,
-  Purchase,
   User,
   Download,
-  PriceUpdate,
   GlobalStats
 } from "../generated/schema";
 
-// Helper para obtener o crear GlobalStats
+// Helper: Obtener o crear GlobalStats
 function getOrCreateGlobalStats(): GlobalStats {
   let stats = GlobalStats.load("global");
   if (stats == null) {
@@ -26,22 +22,19 @@ function getOrCreateGlobalStats(): GlobalStats {
     stats.totalApps = BigInt.fromI32(0);
     stats.totalPublishers = BigInt.fromI32(0);
     stats.totalUsers = BigInt.fromI32(0);
-    stats.totalPurchases = BigInt.fromI32(0);
     stats.totalDownloads = BigInt.fromI32(0);
-    stats.totalRevenue = BigInt.fromI32(0);
     stats.updatedAt = BigInt.fromI32(0);
   }
   return stats;
 }
 
-// Helper para obtener o crear Publisher
+// Helper: Obtener o crear Publisher
 function getOrCreatePublisher(address: Bytes, timestamp: BigInt): Publisher {
   let publisher = Publisher.load(address.toHexString());
   if (publisher == null) {
     publisher = new Publisher(address.toHexString());
     publisher.address = address;
     publisher.totalApps = BigInt.fromI32(0);
-    publisher.totalRevenue = BigInt.fromI32(0);
     publisher.totalDownloads = BigInt.fromI32(0);
     publisher.createdAt = timestamp;
     
@@ -54,14 +47,12 @@ function getOrCreatePublisher(address: Bytes, timestamp: BigInt): Publisher {
   return publisher;
 }
 
-// Helper para obtener o crear User
+// Helper: Obtener o crear User
 function getOrCreateUser(address: Bytes, timestamp: BigInt): User {
   let user = User.load(address.toHexString());
   if (user == null) {
     user = new User(address.toHexString());
     user.address = address;
-    user.totalPurchases = BigInt.fromI32(0);
-    user.totalSpent = BigInt.fromI32(0);
     user.createdAt = timestamp;
     
     // Actualizar stats globales
@@ -85,12 +76,9 @@ export function handleAppRegistered(event: AppRegistered): void {
   // Configurar app
   app.publisher = publisher.id;
   app.slug = event.params.slug;
-  app.name = event.params.slug; // Se actualizará con datos del manifest
+  app.name = event.params.slug; // Se puede actualizar con datos del manifest
   app.latestManifestCid = event.params.manifestCid;
-  app.priceWei = event.params.priceWei;
-  app.priceEth = event.params.priceWei.toBigDecimal().div(BigInt.fromI32(10).pow(18).toBigDecimal()).toString();
   app.totalDownloads = BigInt.fromI32(0);
-  app.totalRevenue = BigInt.fromI32(0);
   app.active = true;
   app.createdAt = event.block.timestamp;
   app.updatedAt = event.block.timestamp;
@@ -118,57 +106,43 @@ export function handleAppRegistered(event: AppRegistered): void {
 
 // Evento: VersionPublished
 export function handleVersionPublished(event: VersionPublished): void {
-  // TODO: El evento ahora usa appKey (bytes32) en lugar de slug (string)
-  // Necesitamos mantener un mapeo appKey -> slug en handleAppRegistered
-  // Por ahora, este handler está deshabilitado
-  // 
-  // let appKey = event.params.appKey;
-  // let slug = resolveSlugFromAppKey(appKey); // Función a implementar
-  // let app = App.load(slug);
-  // ...
-}
-
-// Evento: AppPurchased
-export function handleAppPurchased(event: AppPurchased): void {
-  // TODO: El evento ahora usa appKey (bytes32) en lugar de slug (string)
-  // y los parámetros son: (appKey, buyer, amountPaid, platformFee)
-  // Necesitamos resolver appKey -> slug
-  // 
-  // let appKey = event.params.appKey;
-  // let buyer = event.params.buyer;
-  // let amountPaid = event.params.amountPaid;
-  // let platformFee = event.params.platformFee;
-  // ...
+  // El evento incluye appKey (bytes32), manifestCid, y versionCode
+  // Necesitamos encontrar la app por el appKey
+  // Como el ID de la app es el slug, y el appKey es keccak256(slug),
+  // no podemos recuperar directamente el slug del appKey
+  // Solución: mantener un mapeo adicional o iterar (no ideal)
+  // Por ahora, este handler queda limitado sin un mapeo adicional
+  
+  // TODO: Implementar mapeo appKey -> slug si es necesario
+  // Alternativamente, cambiar el ID de App a usar appKey en lugar de slug
 }
 
 // Evento: AppDownloaded
 export function handleAppDownloaded(event: AppDownloaded): void {
-  // TODO: El evento ahora usa appKey (bytes32) en lugar de slug (string)
-  // y los parámetros son: (appKey, downloader)
-  // Necesitamos resolver appKey -> slug
+  // NOTA: Este evento usa appKey (bytes32) que es keccak256(slug)
+  // Sin un mapeo adicional appKey->slug, no podemos vincular fácilmente
+  // la descarga con la App específica
   // 
-  // let appKey = event.params.appKey;
-  // let downloader = event.params.downloader;
-  // ...
-}
-
-// Evento: AppUpdated
-export function handleAppUpdated(event: AppUpdated): void {
-  // El appKey es el hash del slug, necesitamos buscar la app por appKey
-  // Por ahora, buscamos todas las apps y comparamos el appKey
-  // En producción, considera mantener un mapeo appKey -> slug
-  let appKey = event.params.appKey;
+  // Solución temporal: Registrar la descarga sin vincularla a la app
+  // TODO: Implementar mapeo appKey -> slug en handleAppRegistered
   
-  // Como el schema usa slug como ID, necesitamos encontrar la app correspondiente
-  // Esto es una limitación: no podemos mapear fácilmente appKey -> slug sin mantener estado adicional
-  // Por ahora, esta función necesitará que la app ya esté cargada
-  // Solución temporal: skip if we can't find it
-  // TODO: Mejorar esto agregando un mapeo en handleAppRegistered
+  // Crear o actualizar user
+  let user = getOrCreateUser(event.params.downloader, event.block.timestamp);
+  user.save();
+  
+  // Actualizar stats globales
+  let stats = getOrCreateGlobalStats();
+  stats.totalDownloads = stats.totalDownloads.plus(BigInt.fromI32(1));
+  stats.updatedAt = event.block.timestamp;
+  stats.save();
+  
+  // NOTA: No podemos crear la entidad Download sin vincularla a una App
+  // porque app es un campo requerido. Necesitamos el mapeo appKey->slug
 }
 
 // Evento: AppStatusChanged
 export function handleAppStatusChanged(event: AppStatusChanged): void {
-  // Similar a handleAppUpdated, necesitamos resolver appKey -> slug
-  // Por ahora, esta funcionalidad está limitada sin un mapeo adicional
-  // TODO: Mejorar esto agregando un mapeo en handleAppRegistered
+  // Similar a otros handlers, necesitamos resolver appKey -> slug
+  
+  // TODO: Implementar mapeo appKey -> slug si es necesario
 }
